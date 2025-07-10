@@ -1,0 +1,25 @@
+<h2>Selecciona las variables a analizar</h2>
+
+<!-- Checkboxes para seleccionar columnas -->
+<div class="checkboxes">
+  <label *ngFor="let col of columnas" style="margin-right: 1rem;">
+    <input type="checkbox" [(ngModel)]="selectedVariables[col]" />
+    {{ col }}
+  </label>
+</div>
+
+<table *ngIf="variablesSeleccionadas.length > 0">
+  <thead>
+    <tr>
+      <th *ngFor="let col of variablesSeleccionadas">{{ col }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let fila of datos">
+      <td *ngFor="let col of variablesSeleccionadas">{{ fila[col] }}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<button (click)="continuarAnalisis()">Analizar</button>

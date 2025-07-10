@@ -1,0 +1,32 @@
+<div class="container">
+  <h1>Analizador de Carácter</h1>
+  <p>Sube un archivo CSV o Excel con los resultados recolectados o ve directamente al formulario.</p>
+
+  <div class="acciones">
+    <input type="file" (change)="onArchivoSeleccionado($event)" />
+    <a routerLink="/formulario">
+      <button class="btn-formulario">Ir al formulario</button>
+    </a>
+  </div>
+
+  <div *ngIf="datos.length > 0" class="preview">
+    <h2>Vista previa del archivo</h2>
+    <table>
+      <thead>
+        <tr>
+          <th *ngFor="let col of columnas">{{ col }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fila of datos.slice(0, 5)">
+          <td *ngFor="let col of columnas">{{ fila[col] }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="btn-siguiente" [routerLink]="['/variables']" [state]="{ datos: datos, columnas: columnas }">
+      Siguiente
+    </button>
+  </div>
+
+  <div *ngIf="errorLectura" class="error-msg">{{ errorLectura }}</div>
+</div>

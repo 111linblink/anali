@@ -1,0 +1,20 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.checkboxes {
+  margin-bottom: 1rem;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  padding: 8px;
+  background: #fafafa;
+}

@@ -1,0 +1,58 @@
+<h2>Análisis de Clustering</h2>
+
+<!-- CONTEO POR CLUSTER -->
+<h3>Conteo por Cluster</h3>
+<canvas baseChart [data]="barChartData" chartType="bar"></canvas>
+
+<!-- CENTROIDES -->
+<h3>Centroides</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Cluster</th>
+      <th *ngFor="let v of variablesSeleccionadas">{{ v }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let c of centroides">
+      <td>{{ c.cluster }}</td>
+      <td *ngFor="let v of variablesSeleccionadas">{{ c.valores[v] }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ESTADÍSTICAS -->
+<h3>Estadísticas (Media por Cluster)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Cluster</th>
+      <th *ngFor="let v of variablesSeleccionadas">{{ v }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let key of estadisticas | keyvalue">
+      <td>{{ key.key }}</td>
+      <td *ngFor="let v of variablesSeleccionadas">{{ key.value.media[v] }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- GRÁFICO DE RADAR -->
+<h3>Gráfico de Radar</h3>
+<canvas baseChart [data]="radarChartData" chartType="radar"></canvas>
+
+<!-- DATOS AGRUPADOS -->
+<h3>Datos agrupados (con grupo)</h3>
+<table>
+  <thead>
+    <tr>
+      <th *ngFor="let col of columnas">{{ col }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let row of resultado">
+      <td *ngFor="let col of columnas">{{ row[col] }}</td>
+    </tr>
+  </tbody>
+</table>
