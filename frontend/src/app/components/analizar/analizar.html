@@ -1,12 +1,79 @@
-<h2>Análisis de Clustering</h2>
+<div class="container">
+  <h2>Resultados del Clustering</h2>
 
-<!-- CONTEO POR CLUSTER -->
-<h3>Conteo por Cluster</h3>
-<canvas baseChart [data]="barChartData" chartType="bar"></canvas>
+    <!-- Exportaciones -->
+  <div class="exportaciones">
+    <h3>Exportar resultados</h3>
 
-<!-- CENTROIDES -->
-<h3>Centroides</h3>
-<table>
+    <label for="tipoExportacion">¿Qué deseas exportar?</label>
+    <select [(ngModel)]="tipoExportacion">
+      <option value="centroides">Centroides</option>
+      <option value="estadisticas">Estadísticas</option>
+      <option value="datos">Datos agrupados</option>
+    </select>
+
+    <label for="formatoExportacion">Formato:</label>
+    <select [(ngModel)]="formatoExportacion">
+      <option value="pdf">PDF</option>
+      <option value="csv">CSV</option>
+      <option value="excel">Excel</option>
+    </select>
+
+    <button (click)="exportar()">Exportar</button>
+  </div>
+</div>
+
+  <!-- Selector de ejes para gráfica de dispersión -->
+  <div class="selector-ejes">
+    <label for="ejeX">Eje X:</label>
+    <select [(ngModel)]="ejeX">
+      <option *ngFor="let col of variablesSeleccionadas" [value]="col">{{ col }}</option>
+    </select>
+
+    <label for="ejeY">Eje Y:</label>
+    <select [(ngModel)]="ejeY">
+      <option *ngFor="let col of variablesSeleccionadas" [value]="col">{{ col }}</option>
+    </select>
+
+    <button (click)="actualizarGraficoDispersion()">Actualizar gráfica</button>
+  </div>
+
+  <!-- Gráfico de Barras -->
+  <h3>Gráfico de Barras</h3>
+  <canvas baseChart
+          [data]="barChartData"
+          [type]="'bar'"
+          [plugins]="[ChartDataLabels]">
+  </canvas>
+
+  <!-- Gráfico de Pastel -->
+  <h3>Gráfico de Pastel</h3>
+  <canvas baseChart
+          [data]="pieChartData"
+          [type]="'pie'"
+          [plugins]="[ChartDataLabels]">
+  </canvas>
+
+  <!-- Gráfico de Dispersión -->
+  <h3>Gráfico de Dispersión ({{ ejeX }} vs {{ ejeY }})</h3>
+  <canvas baseChart
+          [data]="scatterChartData"
+          [options]="scatterOptions"
+          [type]="'scatter'"
+          [plugins]="[ChartDataLabels]">
+  </canvas>
+
+  <!-- Gráfico de Burbujas (opcional) -->
+  <h3>Gráfico de Burbujas</h3>
+  <canvas baseChart
+          [data]="bubbleChartData"
+          [options]="bubbleOptions"
+          [type]="'bubble'"
+          [plugins]="[ChartDataLabels]">
+  </canvas>
+
+<h3>Centroides por Cluster</h3>
+<table class="table-centroides" *ngIf="centroides.length > 0">
   <thead>
     <tr>
       <th>Cluster</th>
@@ -20,6 +87,7 @@
     </tr>
   </tbody>
 </table>
+
 
 <!-- ESTADÍSTICAS -->
 <h3>Estadísticas (Media por Cluster)</h3>
@@ -38,21 +106,20 @@
   </tbody>
 </table>
 
-<!-- GRÁFICO DE RADAR -->
-<h3>Gráfico de Radar</h3>
-<canvas baseChart [data]="radarChartData" chartType="radar"></canvas>
-
-<!-- DATOS AGRUPADOS -->
-<h3>Datos agrupados (con grupo)</h3>
-<table>
+<h3>Datos agrupados (con columna Grupo)</h3>
+<table class="table-datos" *ngIf="resultado.length > 0">
   <thead>
     <tr>
       <th *ngFor="let col of columnas">{{ col }}</th>
+      <th>Grupo</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let row of resultado">
-      <td *ngFor="let col of columnas">{{ row[col] }}</td>
+    <tr *ngFor="let fila of resultado">
+      <td *ngFor="let col of columnas">{{ fila[col] }}</td>
+      <td>{{ fila.grupo }}</td>
     </tr>
   </tbody>
 </table>
+
+
