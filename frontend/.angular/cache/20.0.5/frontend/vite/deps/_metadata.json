@@ -1,62 +1,62 @@
 {
-  "hash": "00f27a12",
-  "configHash": "8eab65c9",
-  "lockfileHash": "4862ad85",
-  "browserHash": "6388d20c",
+  "hash": "8eb9cc7e",
+  "configHash": "a2bbc5a1",
+  "lockfileHash": "2581cef4",
+  "browserHash": "6d979132",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "a9dd3b32",
+      "fileHash": "1c622e98",
       "needsInterop": false
     },
     "@angular/common/http": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/http.mjs",
       "file": "@angular_common_http.js",
-      "fileHash": "8c70196e",
+      "fileHash": "1f4f0b1b",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "5feb705a",
+      "fileHash": "394942d7",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "65951d58",
+      "fileHash": "0f9db00a",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "98b9b5b3",
+      "fileHash": "fbeecb3f",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "6e360fb1",
+      "fileHash": "68aa8a56",
+      "needsInterop": false
+    },
+    "ng2-charts": {
+      "src": "../../../../../../node_modules/ng2-charts/fesm2020/ng2-charts.mjs",
+      "file": "ng2-charts.js",
+      "fileHash": "a34034f6",
       "needsInterop": false
     },
     "xlsx": {
-      "src": "../../../../../../../node_modules/xlsx/xlsx.mjs",
+      "src": "../../../../../../node_modules/xlsx/xlsx.mjs",
       "file": "xlsx.js",
-      "fileHash": "738bf77b",
+      "fileHash": "8eb392de",
       "needsInterop": false
     },
     "zone.js": {
       "src": "../../../../../../node_modules/zone.js/fesm2015/zone.js",
       "file": "zone__js.js",
-      "fileHash": "bb164756",
+      "fileHash": "6b73e470",
       "needsInterop": true
-    },
-    "ng2-charts": {
-      "src": "../../../../../../node_modules/ng2-charts/fesm2020/ng2-charts.mjs",
-      "file": "ng2-charts.js",
-      "fileHash": "8e242d60",
-      "needsInterop": false
     }
   },
   "chunks": {
