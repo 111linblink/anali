@@ -17,20 +17,31 @@ export class HomeComponent {
   columnas: string[] = [];
   errorLectura: string | null = null;
 
-  constructor(private router: Router) { }
+  // Paginación
+  paginaActual: number = 0;
+  filasPorPagina: number = 10;
+  datosPaginados: any[] = [];
+  totalPaginas: number = 0;
+  paginasVisibles: number[] = [];
+
+  Math = Math;
+
+  constructor(private router: Router) {}
 
   onArchivoSeleccionado(event: any) {
     this.archivoSeleccionado = event.target.files[0];
     this.errorLectura = null;
 
-    if (!this.archivoSeleccionado) return;
+    if (!this.archivoSeleccionado) {
+      this.resetearDatos();
+      return;
+    }
 
     const tipoArchivo = this.archivoSeleccionado.name.split('.').pop()?.toLowerCase();
 
-    if (tipoArchivo !== 'csv' && tipoArchivo !== 'xlsx' && tipoArchivo !== 'xls') {
+    if (!['csv', 'xlsx', 'xls'].includes(tipoArchivo || '')) {
       this.errorLectura = 'Por favor, selecciona un archivo CSV o Excel válido.';
-      this.datos = [];
-      this.columnas = [];
+      this.resetearDatos();
       return;
     }
 
@@ -65,15 +76,24 @@ export class HomeComponent {
             });
             return fila;
           });
-
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem('datos', JSON.stringify(this.datos));
-            localStorage.setItem('columnas', JSON.stringify(this.columnas));
-          }
+        } else {
+          this.procesarExcel(bstr);
         }
+
+        if (this.datos.length > 0) {
+          this.inicializarPaginacion();
+          this.guardarEnLocalStorage();
+        }
+
       } catch (error: any) {
         this.errorLectura = `Error al procesar archivo: ${error.message}`;
+        this.resetearDatos();
       }
+    };
+
+    lector.onerror = () => {
+      this.errorLectura = 'Error al leer el archivo. Por favor, intenta nuevamente.';
+      this.resetearDatos();
     };
 
     if (tipoArchivo === 'csv') {
@@ -83,9 +103,114 @@ export class HomeComponent {
     }
   }
 
+  private procesarExcel(bstr: string) {
+    const wb = XLSX.read(bstr, { type: 'binary' });
+    const nombreHoja = wb.SheetNames[0];
+    const hoja = wb.Sheets[nombreHoja];
+    const datosJson: any[] = XLSX.utils.sheet_to_json(hoja, { defval: '' });
+
+    if (datosJson.length === 0) {
+      throw new Error("El archivo Excel está vacío o no contiene datos válidos");
+    }
+
+    this.columnas = Object.keys(datosJson[0]);
+    this.datos = datosJson.filter(fila =>
+      this.columnas.some(col =>
+        fila[col] !== null && fila[col] !== undefined && fila[col].toString().trim() !== ''
+      )
+    );
+
+    if (this.datos.length === 0) {
+      throw new Error("No se encontraron datos válidos en el archivo Excel");
+    }
+  }
+
+  private inicializarPaginacion() {
+    this.paginaActual = 0;
+    this.calcularPaginacion();
+  }
+
+  private calcularPaginacion() {
+    this.totalPaginas = Math.ceil(this.datos.length / this.filasPorPagina);
+    this.actualizarDatosPaginados();
+    this.calcularPaginasVisibles();
+  }
+
+  private actualizarDatosPaginados() {
+    const inicio = this.paginaActual * this.filasPorPagina;
+    const fin = inicio + this.filasPorPagina;
+    this.datosPaginados = this.datos.slice(inicio, fin);
+  }
+
+  private calcularPaginasVisibles() {
+    const maxPaginasVisibles = 5;
+    const mitad = Math.floor(maxPaginasVisibles / 2);
+
+    let inicio = Math.max(0, this.paginaActual - mitad);
+    let fin = Math.min(this.totalPaginas, inicio + maxPaginasVisibles);
+
+    if (fin - inicio < maxPaginasVisibles) {
+      inicio = Math.max(0, fin - maxPaginasVisibles);
+    }
+
+    this.paginasVisibles = Array.from({ length: fin - inicio }, (_, i) => inicio + i);
+  }
+
+  cambiarFilasPorPagina() {
+    this.filasPorPagina = Number(this.filasPorPagina);
+    this.paginaActual = 0;
+    this.calcularPaginacion();
+  }
+
+  irAPagina(pagina: number) {
+    if (pagina >= 0 && pagina < this.totalPaginas) {
+      this.paginaActual = pagina;
+      this.actualizarDatosPaginados();
+      this.calcularPaginasVisibles();
+    }
+  }
+
+  private guardarEnLocalStorage() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem('datos', JSON.stringify(this.datos));
+        localStorage.setItem('columnas', JSON.stringify(this.columnas));
+      } catch (error) {
+        console.warn('No se pudo guardar en localStorage:', error);
+      }
+    }
+  }
+
+  private resetearDatos() {
+    this.datos = [];
+    this.columnas = [];
+    this.datosPaginados = [];
+    this.paginaActual = 0;
+    this.totalPaginas = 0;
+    this.paginasVisibles = [];
+  }
+
   irAVariables() {
     if (this.datos.length > 0) {
-      this.router.navigate(['/variables']);
+      this.router.navigate(['/variables'], {
+        state: { datos: this.datos, columnas: this.columnas }
+      });
     }
+  }
+
+  obtenerEstadisticas(): { totalRegistros: number; totalColumnas: number } {
+    return {
+      totalRegistros: this.datos.length,
+      totalColumnas: this.columnas.length
+    };
+  }
+
+  validarDatos(): boolean {
+    if (this.datos.length === 0 || this.columnas.length === 0) {
+      return false;
+    }
+    return this.datos.every(fila =>
+      this.columnas.every(col => col in fila)
+    );
   }
 }

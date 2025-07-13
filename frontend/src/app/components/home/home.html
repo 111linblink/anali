@@ -1,32 +1,129 @@
 <div class="container">
-  <h1>Analizador de Carácter</h1>
-  <p>Sube un archivo CSV o Excel con los resultados recolectados o ve directamente al formulario.</p>
-
-  <div class="acciones">
-    <input type="file" (change)="onArchivoSeleccionado($event)" />
-    <a routerLink="/formulario">
-      <button class="btn-formulario">Ir al formulario</button>
-    </a>
+  <div class="header">
+    <h1>Analizador de Carácter</h1>
+    <p class="subtitle">Sube un archivo CSV o Excel con los resultados recolectados o ve directamente al formulario.</p>
   </div>
 
-  <div *ngIf="datos.length > 0" class="preview">
-    <h2>Vista previa del archivo</h2>
-    <table>
-      <thead>
-        <tr>
-          <th *ngFor="let col of columnas">{{ col }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let fila of datos.slice(0, 5)">
-          <td *ngFor="let col of columnas">{{ fila[col] }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <button class="btn-siguiente" [routerLink]="['/variables']" [state]="{ datos: datos, columnas: columnas }">
-      Siguiente
-    </button>
+  <div class="upload-section">
+    <div class="upload-area" [class.has-file]="archivoSeleccionado">
+      <input 
+        type="file" 
+        id="fileInput"
+        (change)="onArchivoSeleccionado($event)"
+        accept=".csv,.xlsx,.xls"
+        #fileInput
+      />
+      <label for="fileInput" class="upload-label">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17,8 12,3 7,8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span *ngIf="!archivoSeleccionado">Selecciona un archivo CSV o Excel</span>
+        <span *ngIf="archivoSeleccionado" class="file-name">{{ archivoSeleccionado.name }}</span>
+      </label>
+    </div>
+    
+    <div class="divider">
+      <span>o</span>
+    </div>
   </div>
 
-  <div *ngIf="errorLectura" class="error-msg">{{ errorLectura }}</div>
+  <div *ngIf="datos.length > 0" class="preview-section">
+    <div class="preview-header">
+      <h2>Vista previa del archivo</h2>
+      <div class="file-info">
+        <span class="total-rows">{{ datos.length }} registros en total</span>
+      </div>
+    </div>
+
+    <div class="table-controls">
+      <div class="rows-per-page">
+        <label>Mostrar:</label>
+        <select [(ngModel)]="filasPorPagina" (change)="cambiarFilasPorPagina()">
+          <option value="5">5 filas</option>
+          <option value="10">10 filas</option>
+          <option value="25">25 filas</option>
+          <option value="50">50 filas</option>
+          <option value="100">100 filas</option>
+        </select>
+      </div>
+      
+      <div class="pagination-info">
+        Mostrando {{ paginaActual * filasPorPagina + 1 }} - {{ Math.min((paginaActual + 1) * filasPorPagina, datos.length) }} de {{ datos.length }}
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th *ngFor="let col of columnas">{{ col }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let fila of datosPaginados">
+            <td *ngFor="let col of columnas">{{ fila[col] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-controls" *ngIf="totalPaginas > 1">
+      <button 
+        class="btn-pagination" 
+        [disabled]="paginaActual === 0"
+        (click)="irAPagina(paginaActual - 1)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15,18 9,12 15,6"></polyline>
+        </svg>
+        Anterior
+      </button>
+
+      <div class="page-numbers">
+        <button 
+          *ngFor="let pagina of paginasVisibles"
+          class="btn-page-number"
+          [class.active]="pagina === paginaActual"
+          (click)="irAPagina(pagina)"
+        >
+          {{ pagina + 1 }}
+        </button>
+      </div>
+
+      <button 
+        class="btn-pagination" 
+        [disabled]="paginaActual === totalPaginas - 1"
+        (click)="irAPagina(paginaActual + 1)"
+      >
+        Siguiente
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9,18 15,12 9,6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="action-section">
+      <button 
+        class="btn-siguiente" 
+        [routerLink]="['/variables']" 
+        [state]="{ datos: datos, columnas: columnas }"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9,18 15,12 9,6"></polyline>
+        </svg>
+        Continuar con el análisis
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorLectura" class="error-message">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="15" y1="9" x2="9" y2="15"></line>
+      <line x1="9" y1="9" x2="15" y2="15"></line>
+    </svg>
+    {{ errorLectura }}
+  </div>
 </div>

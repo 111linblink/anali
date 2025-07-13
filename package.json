@@ -3,5 +3,8 @@
     "chart.js": "^4.5.0",
     "ng2-charts": "^8.0.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/three": "^0.178.1"
   }
 }
