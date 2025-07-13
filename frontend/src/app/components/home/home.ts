@@ -171,15 +171,38 @@ export class HomeComponent {
   }
 
   private guardarEnLocalStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        localStorage.setItem('datos', JSON.stringify(this.datos));
-        localStorage.setItem('columnas', JSON.stringify(this.columnas));
-      } catch (error) {
-        console.warn('No se pudo guardar en localStorage:', error);
-      }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem('datos', JSON.stringify(this.datos));
+      localStorage.setItem('columnas', JSON.stringify(this.columnas));
+
+      // Extraer temas y preguntas por separado si el formato es "Tema - Pregunta"
+      const temasPorPregunta: { [tema: string]: string[] } = {};
+
+      this.columnas.forEach(col => {
+        if (col.includes(' - ')) {
+          const [tema, pregunta] = col.split(' - ', 2).map(s => s.trim());
+          if (!temasPorPregunta[tema]) temasPorPregunta[tema] = [];
+          if (!temasPorPregunta[tema].includes(pregunta)) {
+            temasPorPregunta[tema].push(pregunta);
+          }
+        }
+      });
+
+      localStorage.setItem('temasPorPregunta', JSON.stringify(temasPorPregunta));
+
+      console.log('✅ Datos guardados en localStorage:', {
+        columnas: this.columnas,
+        datos: this.datos,
+        temasPorPregunta
+      });
+
+    } catch (error) {
+      console.warn('⚠️ No se pudo guardar en localStorage:', error);
     }
   }
+}
+
 
   private resetearDatos() {
     this.datos = [];

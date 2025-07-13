@@ -6,7 +6,6 @@ import { RouterModule } from '@angular/router';
 import { NgChartsModule } from 'ng2-charts';
 import { Router } from '@angular/router';
 
-
 interface ChartData {
   labels: string[];
   datasets: { data: number[], label: string }[];
@@ -75,6 +74,7 @@ export class VariablesComponent implements OnInit {
 
   ngOnInit(): void {
     const datosStr = localStorage.getItem('datos');
+    
     if (!datosStr) {
       console.error('No se encontraron datos en localStorage');
       return;
@@ -83,9 +83,43 @@ export class VariablesComponent implements OnInit {
     try {
       const datosParseados = JSON.parse(datosStr);
       this.procesarDatosIniciales(datosParseados);
-      this.obtenerTemasDesdeBackend();
+
+      // ✅ Inicializar columnas después de procesar datos
+      this.extraerColumnas();
+      this.initializeSelectedVariables();
+
+      // ✅ Recuperar temas y preguntas desde localStorage
+      const temasGuardados = localStorage.getItem('temasPorPregunta');
+      if (temasGuardados) {
+        this.preguntasPorTema = JSON.parse(temasGuardados);
+        this.temas = Object.keys(this.preguntasPorTema);
+        this.inicializarSelecciones();
+        this.crearMapeoClaves();
+        this.procesarDatosConMapeo();
+        this.actualizarGrafica();
+      } else {
+        console.warn('No se encontraron temasPorPregunta en localStorage');
+      }
+
+      console.log('Componente inicializado correctamente');
+      console.log('Columnas disponibles:', this.columnas);
+      console.log('Variables seleccionadas inicializadas:', this.selectedVariables);
+
     } catch (error) {
       console.error('Error parseando datos:', error);
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN: Extrae las columnas de los datos procesados
+  private extraerColumnas(): void {
+    if (this.datos.length > 0) {
+      this.columnas = Object.keys(this.datos[0]).filter(key => {
+        // Filtrar solo las columnas que contienen datos numéricos
+        const valor = this.datos[0][key];
+        return typeof valor === 'number' || !isNaN(Number(valor));
+      });
+      
+      console.log('Columnas extraídas:', this.columnas);
     }
   }
 
@@ -219,7 +253,6 @@ export class VariablesComponent implements OnInit {
   }
 
   private limpiarNombrePregunta(pregunta: string): string {
-    // Ya no necesitamos limpiar aquí porque ya lo hicimos antes
     return pregunta.trim();
   }
 
@@ -239,6 +272,10 @@ export class VariablesComponent implements OnInit {
 
       return nuevaFila;
     });
+
+    // ✅ Actualizar columnas después del mapeo
+    this.extraerColumnas();
+    this.initializeSelectedVariables();
 
     console.log('Datos procesados con mapeo (primera fila):', this.datos[0]);
   }
@@ -331,7 +368,7 @@ export class VariablesComponent implements OnInit {
   }
 
   actualizarGrafica() {
-    const seleccionadas = this.preguntasSeleccionadas;
+    const seleccionadas = this.variablesSeleccionadas;
     
     if (!this.datos.length || seleccionadas.length === 0) {
       this.graficaDataset = { 
@@ -446,7 +483,7 @@ export class VariablesComponent implements OnInit {
   }
 
   realizarPreanalisisPreguntas() {
-  const preguntas = this.preguntasSeleccionadas;
+  const preguntas = this.variablesSeleccionadas;
 
   if (!preguntas.length || this.datos.length === 0) return;
 
@@ -454,12 +491,13 @@ export class VariablesComponent implements OnInit {
 
   for (const pregunta of preguntas) {
     const respuestas = this.datos
-      .map(fila => fila[pregunta])
+      .map(fila => parseFloat(fila[pregunta]))
       .filter(val => !isNaN(val));
 
-    const promedio = respuestas.reduce((a, b) => a + b, 0) / respuestas.length;
-    const preguntaLimpia = this.limpiarPreguntaParaRadar(pregunta);
-    valores[preguntaLimpia] = parseFloat(promedio.toFixed(2));
+    if (respuestas.length > 0) {
+      const promedio = respuestas.reduce((a, b) => a + b, 0) / respuestas.length;
+      valores[pregunta] = parseFloat(promedio.toFixed(2));
+    }
   }
 
   const columnas = Object.keys(valores);
@@ -490,16 +528,22 @@ export class VariablesComponent implements OnInit {
   });
 }
 
-  
 
   /**
-   * Inicializa el objeto selectedVariables con todas las columnas en false
+   * ✅ CORREGIDO: Inicializa el objeto selectedVariables con todas las columnas en false
    */
   initializeSelectedVariables(): void {
     this.selectedVariables = {};
-    this.columnas.forEach(col => {
-      this.selectedVariables[col] = false;
-    });
+    
+    // Asegurar que columnas esté inicializada
+    if (this.columnas && this.columnas.length > 0) {
+      this.columnas.forEach(col => {
+        this.selectedVariables[col] = false;
+      });
+      console.log('Variables inicializadas:', this.selectedVariables);
+    } else {
+      console.warn('No hay columnas disponibles para inicializar variables');
+    }
   }
 
   /**
@@ -523,9 +567,9 @@ export class VariablesComponent implements OnInit {
   updateSelection(): void {
     const seleccionadas = this.variablesSeleccionadas;
     console.log('Variables seleccionadas:', seleccionadas);
-    
-    // Aquí puedes agregar lógica adicional si necesitas
-    // Por ejemplo: validaciones, actualizar otros componentes, etc.
+
+    this.realizarPreanalisisPreguntas();
+
   }
 
   /**
@@ -548,6 +592,85 @@ export class VariablesComponent implements OnInit {
     this.updateSelection();
   }
 
+
+  // Agregar esta propiedad en tu componente
+get todasLasPreguntas(): string[] {
+  const preguntas: string[] = [];
+  
+  // Recorrer todos los temas y extraer todas las preguntas
+  for (const tema of this.temas) {
+    if (this.preguntasPorTema[tema]) {
+      preguntas.push(...this.preguntasPorTema[tema]);
+    }
+  }
+  
+  return preguntas;
+}
+
+// Métodos para la sección "Variables disponibles (vista alternativa)"
+selectAllPreguntas(): void {
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      this.seleccionPregunta[pregunta] = true;
+    }
+  }
+  this.onPreguntaToggle();
+}
+
+clearAllPreguntas(): void {
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      this.seleccionPregunta[pregunta] = false;
+    }
+  }
+  this.onPreguntaToggle();
+}
+
+get allPreguntasSelected(): boolean {
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      if (!this.seleccionPregunta[pregunta]) {
+        return false;
+      }
+    }
+  }
+  return Object.keys(this.preguntasPorTema).length > 0;
+}
+
+get hasAnySelection(): boolean {
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      if (this.seleccionPregunta[pregunta]) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+getPreguntasSelectionText(): string {
+  let totalPreguntas = 0;
+  let seleccionadas = 0;
+  
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      totalPreguntas++;
+      if (this.seleccionPregunta[pregunta]) {
+        seleccionadas++;
+      }
+    }
+  }
+  
+  if (seleccionadas === 0) {
+    return 'Ninguna variable seleccionada';
+  } else if (seleccionadas === 1) {
+    return '1 variable seleccionada';
+  } else if (seleccionadas === totalPreguntas) {
+    return `Todas las ${totalPreguntas} variables seleccionadas`;
+  } else {
+    return `${seleccionadas} de ${totalPreguntas} variables seleccionadas`;
+  }
+}
   /**
    * Verifica si todas las variables están seleccionadas
    */
@@ -562,43 +685,64 @@ export class VariablesComponent implements OnInit {
     return this.getSelectedCount() > 0;
   }
 
+  toggleTemaVariables(tema: string, event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const checked = input.checked;
+
+  if (this.preguntasPorTema[tema]) {
+    this.preguntasPorTema[tema].forEach(pregunta => {
+      const clave = `${tema} - ${pregunta}`;
+      this.selectedVariables[clave] = checked;
+    });
+    this.updateSelection();
+  }
+}
+
+
+esTemaSeleccionado(tema: string): boolean {
+  return this.preguntasPorTema[tema]?.every(p => this.selectedVariables[`${tema} - ${p}`]) ?? false;
+}
+
+
   /**
-   * Continúa con el análisis de las variables seleccionadas
+   * ✅ CORREGIDO: Continúa con el análisis de las variables seleccionadas
    */
   continuarAnalisis(): void {
     const seleccionadas = this.variablesSeleccionadas;
 
     if (seleccionadas.length === 0) {
-      // Mostrar mensaje de error o notificación
       console.warn('Debe seleccionar al menos una variable para continuar');
+      alert('Por favor, seleccione al menos una variable para continuar con el análisis.');
       return;
     }
 
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        // Guardar las variables seleccionadas en localStorage
-        localStorage.setItem('variablesSeleccionadas', JSON.stringify(seleccionadas));
-        
-        // También guardar los datos filtrados para optimizar el siguiente paso
-        const datosFiltrados = this.datos.map(fila => {
-          const filaFiltrada: any = {};
-          seleccionadas.forEach(col => {
+      // ✅ Guardar las variables seleccionadas en localStorage
+      localStorage.setItem('variablesSeleccionadas', JSON.stringify(seleccionadas));
+      
+      // ✅ Filtrar los datos solo con las variables seleccionadas
+      const datosFiltrados = this.datos.map(fila => {
+        const filaFiltrada: any = {};
+        seleccionadas.forEach(col => {
+          if (fila.hasOwnProperty(col)) {
             filaFiltrada[col] = fila[col];
-          });
-          return filaFiltrada;
+          }
         });
-        
-        localStorage.setItem('datosFiltrados', JSON.stringify(datosFiltrados));
-        
-        console.log(`Navegando a análisis con ${seleccionadas.length} variables:`, seleccionadas);
-        
-        // Navegar a la página de análisis
-        this.router.navigate(['/analizar']);
-      } else {
-        console.error('localStorage no disponible');
-      }
+        return filaFiltrada;
+      });
+      
+      // ✅ Guardar los datos filtrados
+      localStorage.setItem('datosFiltrados', JSON.stringify(datosFiltrados));
+      
+      console.log(`Guardando ${seleccionadas.length} variables seleccionadas:`, seleccionadas);
+      console.log('Datos filtrados guardados:', datosFiltrados.slice(0, 3)); // Mostrar solo las primeras 3 filas
+      
+      // ✅ Navegar a la página de análisis
+      this.router.navigate(['/analizar']);
+      
     } catch (error) {
-      console.error('Error al guardar datos:', error);
+      console.error('Error al guardar datos en localStorage:', error);
+      alert('Error al guardar los datos. Por favor, intente nuevamente.');
     }
   }
 
@@ -639,15 +783,6 @@ export class VariablesComponent implements OnInit {
   currentPage: number = 1;
   itemsPerPage: number = 10;
   itemsPerPageOptions: number[] = [5, 10, 25, 50];
-
-  /**
-   * Obtiene los datos paginados para la vista previa
-   */
-  /*get datosPaginados(): any[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.datos.slice(startIndex, endIndex);
-  }*/
 
   /**
    * Obtiene el número total de páginas
@@ -744,6 +879,5 @@ export class VariablesComponent implements OnInit {
   volver(): void {
     this.clearSelection();
     this.router.navigate(['/upload']); // Ajusta la ruta según tu aplicación
-  
-}
+  }
 }
