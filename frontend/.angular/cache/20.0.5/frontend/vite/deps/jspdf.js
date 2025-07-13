@@ -8492,7 +8492,7 @@ function(t2) {
  */
 function(t2) {
   function e() {
-    return (n.canvg ? Promise.resolve(n.canvg) : import("./index.es-JXN72APC.js")).catch(function(t3) {
+    return (n.canvg ? Promise.resolve(n.canvg) : import("./index.es-BNGEBT5X.js")).catch(function(t3) {
       return Promise.reject(new Error("Could not load canvg: " + t3));
     }).then(function(t3) {
       return t3.default ? t3.default : t3;

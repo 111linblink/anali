@@ -1,97 +1,97 @@
 {
-  "hash": "e722f112",
+  "hash": "ce27686f",
   "configHash": "8c960085",
-  "lockfileHash": "81a6a08f",
-  "browserHash": "e9e949fb",
+  "lockfileHash": "1c424f6a",
+  "browserHash": "7395c165",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "47a5ab54",
+      "fileHash": "6b9417de",
       "needsInterop": false
     },
     "@angular/common/http": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/http.mjs",
       "file": "@angular_common_http.js",
-      "fileHash": "b6226fca",
+      "fileHash": "6abf3b02",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "89b53b2a",
+      "fileHash": "bdf14a9d",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "d9eab7d8",
+      "fileHash": "fc0b4059",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "4b3bb12d",
+      "fileHash": "f62c627d",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "253b1611",
+      "fileHash": "b7176b94",
       "needsInterop": false
     },
     "chart.js": {
       "src": "../../../../../../node_modules/chart.js/dist/chart.mjs",
       "file": "chart__js.js",
-      "fileHash": "cd4274a1",
+      "fileHash": "1f84b710",
       "needsInterop": false
     },
     "chartjs-plugin-datalabels": {
       "src": "../../../../../../node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.esm.js",
       "file": "chartjs-plugin-datalabels.js",
-      "fileHash": "dc04d25c",
+      "fileHash": "89cb2d8c",
       "needsInterop": false
     },
     "file-saver": {
       "src": "../../../../../../node_modules/file-saver/dist/FileSaver.min.js",
       "file": "file-saver.js",
-      "fileHash": "a8992907",
+      "fileHash": "c7d79541",
       "needsInterop": true
     },
     "jspdf": {
       "src": "../../../../../../node_modules/jspdf/dist/jspdf.es.min.js",
       "file": "jspdf.js",
-      "fileHash": "d92be00e",
+      "fileHash": "fa5b436a",
       "needsInterop": false
     },
     "jspdf-autotable": {
       "src": "../../../../../../node_modules/jspdf-autotable/dist/jspdf.plugin.autotable.mjs",
       "file": "jspdf-autotable.js",
-      "fileHash": "821c8073",
+      "fileHash": "85568e71",
       "needsInterop": false
     },
     "ng2-charts": {
       "src": "../../../../../../node_modules/ng2-charts/fesm2020/ng2-charts.mjs",
       "file": "ng2-charts.js",
-      "fileHash": "7d690f98",
+      "fileHash": "be5cd85a",
       "needsInterop": false
     },
     "three": {
       "src": "../../../../../../node_modules/three/build/three.module.js",
       "file": "three.js",
-      "fileHash": "4e06a4d3",
+      "fileHash": "1df8c3a2",
       "needsInterop": false
     },
     "xlsx": {
       "src": "../../../../../../node_modules/xlsx/xlsx.mjs",
       "file": "xlsx.js",
-      "fileHash": "9956b467",
+      "fileHash": "cfe1a22e",
       "needsInterop": false
     },
     "zone.js": {
       "src": "../../../../../../node_modules/zone.js/fesm2015/zone.js",
       "file": "zone__js.js",
-      "fileHash": "497bae7b",
+      "fileHash": "4a370840",
       "needsInterop": true
     }
   },
@@ -99,8 +99,8 @@
     "purify.es-57F44ZY4": {
       "file": "purify__es-57F44ZY4.js"
     },
-    "index.es-JXN72APC": {
-      "file": "index__es-JXN72APC.js"
+    "index.es-BNGEBT5X": {
+      "file": "index__es-BNGEBT5X.js"
     },
     "chunk-WUUVWCMF": {
       "file": "chunk-WUUVWCMF.js"

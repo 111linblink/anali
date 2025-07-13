@@ -1,78 +1,76 @@
-<div class="container-fluid p-4">
+<div class="container">
   <h2>Selección de variables para análisis</h2>
 
+  <!-- Tarjetas de info -->
   <div class="info-cards">
-            <div class="info-card">
-                <div class="label">Total Filas</div>
-                <strong>{{ infoGeneral.totalFilas }}</strong>
-
-            </div>
-            <div class="info-card">
-                <div class="label">Total Temas</div>
-                <strong>{{ infoGeneral.totalTemas }}</strong>
-
-            </div>
-            <div class="info-card">
-                <div class="label">Mapeo Exitoso</div>
-                <strong>{{ estadisticasMapeo.porcentajeExito }}% ({{ estadisticasMapeo.preguntasMapeadas }}/{{ estadisticasMapeo.totalPreguntas }})</strong>
-            </div>
-        </div>
-  <!-- Información general -->
-
-
-  <!-- Selección por columnas directamente -->
-  <!-- Selección por columnas directamente (con agrupación por tema) -->
-<div class="card mt-4">
-  <div class="card-body">
-    <h4 class="card-title">Variables disponibles (vista agrupada)</h4>
-    <div class="mb-3">
-      <button class="btn btn-secondary btn-sm me-2" (click)="selectAll()" [disabled]="allSelected">Seleccionar Todo</button>
-      <button class="btn btn-secondary btn-sm" (click)="clearSelection()" [disabled]="!hasSelection">Limpiar Selección</button>
+    <div class="info-card">
+      <div class="label">Total Filas</div>
+      <div class="value">{{ infoGeneral.totalFilas }}</div>
     </div>
+    <div class="info-card">
+      <div class="label">Total Temas</div>
+      <div class="value">{{ infoGeneral.totalTemas }}</div>
+    </div>
+    <div class="info-card">
+      <div class="label">Mapeo Exitoso</div>
+      <div class="value">{{ estadisticasMapeo.porcentajeExito }}% ({{ estadisticasMapeo.preguntasMapeadas }}/{{ estadisticasMapeo.totalPreguntas }})</div>
+    </div>
+  </div>
 
-    <div class="temas-agrupados">
-      <div class="tema-section" *ngFor="let tema of temas">
-        <div class="tema-header" (click)="toggleTemaExpansion(tema)">
-          <div class="tema-title">
-            <label (click)="$event.stopPropagation()">
-              <input type="checkbox"
-                [checked]="esTemaSeleccionado(tema)"
-                (change)="toggleTemaVariables(tema, $event)" />
+  <!-- Variables disponibles agrupadas -->
+  <div class="card mt-4">
+    <div class="card-body">
+      <h4 class="card-title">Variables disponibles</h4>
+
+      <div class="mb-3">
+        <button class="btn btn-secondary btn-sm me-2" (click)="selectAll()" [disabled]="allSelected">Seleccionar Todo</button>
+        <button class="btn btn-secondary btn-sm" (click)="clearSelection()" [disabled]="!hasSelection">Limpiar Selección</button>
+      </div>
+
+      <div class="temas-agrupados">
+        <div class="tema-section" *ngFor="let tema of temas">
+          <div class="tema-header" (click)="toggleTemaExpansion(tema)" [class.expanded]="temasExpandidos[tema]">
+            <div class="tema-title">
+              <label (click)="$event.stopPropagation()" [for]="'tema-' + tema">
+                <input type="checkbox"
+                       [id]="'tema-' + tema"
+                       [checked]="esTemaSeleccionado(tema)"
+                       (change)="toggleTemaVariables(tema, $event)" />
                 <span class="tema-icon"></span>
-              <strong>{{ tema }}</strong>
-            </label>
-          </div>
-          <span class="expansion-icon">{{ temasExpandidos[tema] ? '▼' : '▶' }}</span>
-        </div>
-
-        <div class="preguntas-container" *ngIf="temasExpandidos[tema]">
-          <div class="preguntas-content">
-            <div class="pregunta-item" *ngFor="let pregunta of preguntasPorTema[tema]">
-              <input type="checkbox"
-                     [(ngModel)]="selectedVariables[tema + ' - ' + pregunta]"
-                     (change)="updateSelection()" 
-                     [id]="'var-' + tema + '-' + pregunta" />
-              <label [for]="'var-' + tema + '-' + pregunta" class="pregunta-text">
-                {{ pregunta }}
+                <strong>{{ tema }}</strong>
               </label>
+            </div>
+            <span class="expansion-icon">{{ temasExpandidos[tema] ? '▼' : '▶' }}</span>
+          </div>
+
+          <div class="preguntas-container" *ngIf="temasExpandidos[tema]">
+            <div class="preguntas-content">
+              <div class="pregunta-item" *ngFor="let pregunta of preguntasPorTema[tema]">
+                <input type="checkbox"
+                       [id]="'var-' + tema + '-' + pregunta"
+                       [(ngModel)]="selectedVariables[tema + ' - ' + pregunta]"
+                       (change)="updateSelection()" />
+                <label [for]="'var-' + tema + '-' + pregunta" class="pregunta-text">
+                  {{ pregunta }}
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <p class="mt-3">{{ getSelectionText() }}</p>
     </div>
-
-    <p class="mt-3">{{ getSelectionText() }}</p>
   </div>
-</div>
 
-  <!-- Vista previa de datos -->
+  <!-- Vista previa datos -->
   <div *ngIf="variablesSeleccionadas.length > 0" class="mt-4">
-    <h4>Vista previa de datos</h4>
+    <h4 class="card-title">Vista previa de datos</h4>
 
-    <div class="d-flex justify-content-between mb-2">
+    <div class="table-controls mb-3">
       <div>{{ dataRange }}</div>
       <div>
-        <select class="form-select form-select-sm d-inline w-auto" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+        <select class="items-per-page-select" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
           <option *ngFor="let option of itemsPerPageOptions" [value]="option">{{ option }} por página</option>
         </select>
       </div>
@@ -92,43 +90,59 @@
     </table>
 
     <div class="pagination-controls" *ngIf="totalPages > 1">
-  <button class="pagination-btn" (click)="previousPage()" [disabled]="!canGoPrevious">« Anterior</button>
+      <button class="pagination-btn" (click)="previousPage()" [disabled]="!canGoPrevious">« Anterior</button>
 
-  <ng-container *ngFor="let page of pageNumbers">
-    <button
-      class="pagination-btn"
-      [class.active]="page === currentPage"
-      (click)="goToPage(page)">
-      {{ page }}
-    </button>
-  </ng-container>
+      <ng-container *ngFor="let page of pageNumbers">
+        <button
+          class="pagination-btn"
+          [class.active]="page === currentPage"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </ng-container>
 
-  <button class="pagination-btn" (click)="nextPage()" [disabled]="!canGoNext">Siguiente »</button>
-</div>
-
-  </div>
-
-  <!-- Botones -->
-  <div class="mt-4 text-end">
-    <button class="btn btn-secondary me-2" (click)="volver()">Volver</button>
-    <button class="btn btn-primary" (click)="continuarAnalisis()" [disabled]="!hasSelection">Analizar Variables</button>
+      <button class="pagination-btn" (click)="nextPage()" [disabled]="!canGoNext">Siguiente »</button>
+    </div>
   </div>
 
   <!-- Gráfica de barras -->
-  <div *ngIf="graficaDataset.labels.length > 0" class="mt-5">
-    <h4>Promedios por tema</h4>
-    <canvas baseChart [data]="graficaDataset" [options]="graficaOpciones" [type]="'bar'"></canvas>
-  </div>
+ <div *ngIf="graficaDataset.labels.length > 0" class="chart-container">
+  <h4 class="card-title">Promedios por tema</h4>
+  <canvas baseChart [data]="graficaDataset" [options]="graficaOpciones" [type]="'bar'"></canvas>
+</div>
 
-  <!-- Resultado de cluster -->
-  <div *ngIf="clusterEstimado !== null" class="alert mt-4" [style.borderColor]="clusterColor" style="border: 2px solid; padding: 10px;">
+  <!-- Resultado cluster -->
+  <div *ngIf="clusterEstimado !== null" class="alert mt-4" [style.borderColor]="clusterColor">
     <strong>Grupo estimado (cluster): {{ clusterEstimado }}</strong><br />
     <span>{{ clusterDescripcion }}</span>
   </div>
 
   <!-- Gráfica radar -->
-  <div *ngIf="radarDataset.labels.length > 0" class="mt-4">
-    <h4>Preanálisis basado en tus respuestas</h4>
-    <canvas baseChart [data]="radarDataset" [options]="radarOpciones" [type]="'radar'"></canvas>
-  </div>
+  <div *ngIf="radarDataset.labels.length > 0 && clusterEstimado !== null" class="chart-container">
+  <h4 class="card-title">Preanálisis basado en tus respuestas</h4>
+  <canvas baseChart [data]="radarDataset" [options]="radarOpciones" [type]="'radar'"></canvas>
+</div>
+
+
+  <div class="preanalisis-conclusion" *ngIf="clusterEstimado !== null">
+  <p>
+    Este gráfico radar representa un <strong>preanálisis automático utilizando el algoritmo K-Means</strong>. 
+    Cada eje corresponde a una de las variables seleccionadas y su valor promedio basado en tus respuestas. 
+    El sistema ha agrupado tus datos en un <strong>cluster estimado ({{ clusterEstimado }})</strong>, lo cual sugiere un perfil o patrón común dentro del conjunto de datos.
+  </p>
+
+  <p>
+    Esta información es útil para identificar <strong>tendencias, similitudes o posibles agrupaciones naturales</strong> dentro de las respuestas antes de aplicar análisis más profundos. 
+    Recuerda que este análisis es exploratorio y sirve como una guía inicial sobre cómo podrían distribuirse tus datos.
+  </p>
+</div>
+
+
+
+  <!-- Botones finales -->
+  <div class="bottom-buttons">
+  <button class="btn btn-secondary" (click)="volver()">Volver</button>
+  <button class="btn btn-primary" (click)="continuarAnalisis()" [disabled]="!hasSelection">Analizar Variables</button>
+</div>
+
 </div>

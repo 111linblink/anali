@@ -108,8 +108,41 @@ export class VariablesComponent implements OnInit {
       this.updateDatosPaginados();
 
   }
+  get datosFiltrados(): any[] {
+  const seleccionadas = this.variablesSeleccionadas;
+  if (!seleccionadas.length) return [];
 
-  // ✅ NUEVA FUNCIÓN: Extrae las columnas de los datos procesados
+  return this.datos.map(fila => {
+    const filaFiltrada: any = {};
+    seleccionadas.forEach(col => {
+      filaFiltrada[col] = fila[col];
+    });
+    return filaFiltrada;
+  });
+}
+
+updateDatosPaginados(): void {
+  const datosAFiltrar = this.datosFiltrados;
+  const inicio = (this.currentPage - 1) * this.itemsPerPage;
+  const fin = inicio + this.itemsPerPage;
+  this.datosPaginados = datosAFiltrar.slice(inicio, fin);
+}
+
+get totalPages(): number {
+  return Math.ceil(this.datosFiltrados.length / this.itemsPerPage);
+}
+
+updateSelection(): void {
+  const seleccionadas = this.variablesSeleccionadas;
+  console.log('Variables seleccionadas:', seleccionadas);
+
+  this.currentPage = 1; // reset paginación
+  this.updateDatosPaginados();
+
+  this.realizarPreanalisisPreguntas();
+}
+
+
   private extraerColumnas(): void {
     if (this.datos.length > 0) {
       this.columnas = Object.keys(this.datos[0]).filter(key => {
@@ -282,12 +315,6 @@ export class VariablesComponent implements OnInit {
   
 
   datosPaginados: any[] = [];
-
-  updateDatosPaginados(): void {
-  const inicio = (this.currentPage - 1) * this.itemsPerPage;
-  const fin = inicio + this.itemsPerPage;
-  this.datosPaginados = this.datos.slice(inicio, fin);
-}
 
   // Métodos para manejo de temas expandidos
   toggleTemaExpansion(tema: string) {
@@ -545,13 +572,6 @@ export class VariablesComponent implements OnInit {
    * Se ejecuta cuando cambia la selección de variables
    * Útil para agregar lógica adicional cuando el usuario selecciona/deselecciona
    */
-  updateSelection(): void {
-    const seleccionadas = this.variablesSeleccionadas;
-    console.log('Variables seleccionadas:', seleccionadas);
-
-    this.realizarPreanalisisPreguntas();
-
-  }
 
   /**
    * Selecciona todas las variables
@@ -567,11 +587,36 @@ export class VariablesComponent implements OnInit {
    * Deselecciona todas las variables
    */
   clearSelection(): void {
-    this.columnas.forEach(col => {
-      this.selectedVariables[col] = false;
-    });
-    this.updateSelection();
+  // Limpiar selección de variables
+  this.columnas.forEach(col => {
+    this.selectedVariables[col] = false;
+  });
+
+  // Limpiar selección de preguntas por tema
+  for (const tema of this.temas) {
+    for (const pregunta of this.preguntasPorTema[tema]) {
+      this.seleccionPregunta[pregunta] = false;
+    }
   }
+
+  // Resetear gráficas y resultados de análisis
+  this.graficaDataset = {
+    labels: [],
+    datasets: [{ data: [], label: 'Promedio por tema' }]
+  };
+
+  this.radarDataset = {
+    labels: [],
+    datasets: []
+  };
+
+  this.clusterEstimado = null;
+  this.clusterColor = '';
+  this.clusterDescripcion = '';
+
+  this.updateSelection();
+}
+
 
 
   // Agregar esta propiedad en tu componente
@@ -768,9 +813,6 @@ esTemaSeleccionado(tema: string): boolean {
   /**
    * Obtiene el número total de páginas
    */
-  get totalPages(): number {
-    return Math.ceil(this.datos.length / this.itemsPerPage);
-  }
 
   /**
    * Obtiene el array de números de página para mostrar
