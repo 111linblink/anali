@@ -23,7 +23,7 @@ h2 {
   font-size: 1.8rem;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
+  /*-webkit-background-clip: text;*/
   -webkit-text-fill-color: transparent;
   margin-bottom: 1.5rem;
   display: flex;
@@ -45,7 +45,7 @@ h2::before {
   align-items: center;
   gap: 0.5rem;
   background: linear-gradient(135deg, #2d3748, #4a5568);
-  -webkit-background-clip: text;
+  /*-webkit-background-clip: text;*/
   -webkit-text-fill-color: transparent;
 }
 
