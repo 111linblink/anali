@@ -1,25 +1,130 @@
-<h2>Selecciona las variables a analizar</h2>
+<div class="container">
+  <div class="card">
+    <h2>Selecciona las variables a analizar</h2>
+    
+    <div class="selection-section">
+      <div class="section-title">Variables disponibles</div>
+      
+      <div class="selection-controls">
+        <button class="btn btn-secondary btn-small" 
+                (click)="selectAll()" 
+                [disabled]="allSelected">
+          Seleccionar Todo
+        </button>
+        <button class="btn btn-secondary btn-small" 
+                (click)="clearSelection()" 
+                [disabled]="!hasSelection">
+          Limpiar Selección
+        </button>
+      </div>
+      <br/>
+      <div class="checkboxes">
+        <div class="checkbox-item" *ngFor="let col of columnas">
+          <input type="checkbox" 
+                 [id]="'var_' + col" 
+                 [(ngModel)]="selectedVariables[col]"
+                 (change)="updateSelection()" />
+          <label [for]="'var_' + col">{{ col }}</label>
+        </div>
+      </div>
+      
+      <div class="selection-count">
+        {{ getSelectionText() }}
+      </div>
+    </div>
+    <br/> 
+    
+    <div class="preview-section">
+      <div class="section-title">Vista previa de datos</div>
+      
+      <div *ngIf="variablesSeleccionadas.length === 0" class="empty-state">
+        Selecciona al menos una variable para ver la vista previa
+      </div>
+      
+      <div *ngIf="variablesSeleccionadas.length > 0 && hasDatos">
+        <!-- Controles de paginación superiores -->
+        <div class="table-controls">
+          <div class="rows-per-page">
+            <span>Mostrando {{ dataRange }} registros</span>
+            <select class="items-per-page-select" 
+                    [(ngModel)]="itemsPerPage" 
+                    (change)="changeItemsPerPage(itemsPerPage)">
+              <option *ngFor="let option of itemsPerPageOptions" [value]="option">
+                {{ option }} por página
+              </option>
+            </select>
+          </div>
+        </div>
+        <!-- Tabla de datos -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th *ngFor="let col of variablesSeleccionadas">{{ col }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of datosPaginados">
+              <td *ngFor="let col of variablesSeleccionadas">{{ fila[col] }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-<!-- Checkboxes para seleccionar columnas -->
-<div class="checkboxes">
-  <label *ngFor="let col of columnas" style="margin-right: 1rem;">
-    <input type="checkbox" [(ngModel)]="selectedVariables[col]" />
-    {{ col }}
-  </label>
+        <!-- Controles de paginación inferiores -->
+        <div class="pagination-controls bottom">
+          <div class="pagination-info">
+            <span>{{ dataRange }} registros</span>
+          </div>
+          
+          <div class="pagination-buttons" *ngIf="totalPages > 1">
+            <!-- Botón Primera página -->
+            <button class="pagination-btn" 
+                    [disabled]="currentPage === 1"
+                    (click)="goToPage(1)">
+            Anterior
+            </button>
+            
+            <!-- Botón Página anterior -->
+            <button class="pagination-btn" 
+                    [disabled]="!canGoPrevious"
+                    (click)="previousPage()">
+              ⟨
+            </button>
+            
+            <!-- Números de página -->
+            <button *ngFor="let page of pageNumbers" 
+                    class="pagination-btn"
+                    [class.active]="page === currentPage"
+                    (click)="goToPage(page)">
+              {{ page }}
+            </button>
+            
+            <!-- Botón Página siguiente -->
+            <button class="pagination-btn" 
+                    [disabled]="!canGoNext"
+                    (click)="nextPage()">
+              ⟩
+            </button>
+            
+            <!-- Botón Última página -->
+            <button class="pagination-btn" 
+                    [disabled]="currentPage === totalPages"
+                    (click)="goToPage(totalPages)">
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="volver()">
+        Volver  
+      </button> 
+      <button class="btn btn-primary" 
+              (click)="continuarAnalisis()" 
+              [disabled]="!hasSelection">
+        Analizar Variables
+      </button>
+    </div>
+  </div>
 </div>
-
-<table *ngIf="variablesSeleccionadas.length > 0">
-  <thead>
-    <tr>
-      <th *ngFor="let col of variablesSeleccionadas">{{ col }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let fila of datos">
-      <td *ngFor="let col of variablesSeleccionadas">{{ fila[col] }}</td>
-    </tr>
-  </tbody>
-</table>
-
-
-<button (click)="continuarAnalisis()">Analizar</button>
