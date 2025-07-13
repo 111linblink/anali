@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from collections import defaultdict
+from sklearn.cluster import KMeans
 from io import StringIO
 import pandas as pd
 import joblib
