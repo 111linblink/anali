@@ -4,7 +4,7 @@ import {
   __spreadValues
 } from "./chunk-TXDUYLVM.js";
 
-// ../node_modules/three/build/three.core.js
+// node_modules/three/build/three.core.js
 var REVISION = "178";
 var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
 var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31019,7 +31019,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-// ../node_modules/three/build/three.module.js
+// node_modules/three/build/three.module.js
 function WebGLAnimation() {
   let context = null;
   let isAnimating = false;
