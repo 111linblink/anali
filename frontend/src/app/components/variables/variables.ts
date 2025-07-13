@@ -40,10 +40,6 @@ export class VariablesComponent implements OnInit {
   selectedVariables: { [key: string]: boolean } = {};
 
   Math = Math;
-  // Propiedades para paginación
-  paginaActual: number = 1;
-  filasPorPagina: number = 10;
-  totalPaginas: number = 0;
 
   graficaDataset: ChartData = {
     labels: [],
@@ -108,6 +104,9 @@ export class VariablesComponent implements OnInit {
     } catch (error) {
       console.error('Error parseando datos:', error);
     }
+
+      this.updateDatosPaginados();
+
   }
 
   // ✅ NUEVA FUNCIÓN: Extrae las columnas de los datos procesados
@@ -163,7 +162,6 @@ export class VariablesComponent implements OnInit {
     });
 
     this.datos = [...this.datosOriginales];
-    this.calcularPaginacion();
 
     console.log('Datos originales procesados:', this.datosOriginales.length, 'filas');
     console.log('Claves disponibles (limpiadas):', Object.keys(this.datosOriginales[0] || {}));
@@ -281,29 +279,15 @@ export class VariablesComponent implements OnInit {
   }
 
   // Métodos de paginación
-  calcularPaginacion() {
-    this.totalPaginas = Math.ceil(this.datos.length / this.filasPorPagina);
-  }
+  
 
-  get datosPaginados(): any[] {
-    const inicio = (this.paginaActual - 1) * this.filasPorPagina;
-    const fin = inicio + this.filasPorPagina;
-    return this.datos.slice(inicio, fin);
-  }
+  datosPaginados: any[] = [];
 
-  cambiarPagina(pagina: number) {
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.paginaActual = pagina;
-    }
-  }
-
-  get paginasArray(): number[] {
-    const paginas = [];
-    for (let i = 1; i <= this.totalPaginas; i++) {
-      paginas.push(i);
-    }
-    return paginas;
-  }
+  updateDatosPaginados(): void {
+  const inicio = (this.currentPage - 1) * this.itemsPerPage;
+  const fin = inicio + this.itemsPerPage;
+  this.datosPaginados = this.datos.slice(inicio, fin);
+}
 
   // Métodos para manejo de temas expandidos
   toggleTemaExpansion(tema: string) {
@@ -470,9 +454,6 @@ export class VariablesComponent implements OnInit {
   get infoGeneral() {
     return {
       totalFilas: this.datos.length,
-      paginaActual: this.paginaActual,
-      totalPaginas: this.totalPaginas,
-      filasPorPagina: this.filasPorPagina,
       temasExpandidos: Object.values(this.temasExpandidos).filter(Boolean).length,
       totalTemas: this.temas.length
     };
@@ -830,6 +811,7 @@ esTemaSeleccionado(tema: string): boolean {
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      this.updateDatosPaginados();
     }
   }
 
@@ -839,6 +821,7 @@ esTemaSeleccionado(tema: string): boolean {
   previousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
+      this.updateDatosPaginados();
     }
   }
 
@@ -848,6 +831,7 @@ esTemaSeleccionado(tema: string): boolean {
   nextPage(): void {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+      this.updateDatosPaginados();
     }
   }
 
@@ -857,6 +841,7 @@ esTemaSeleccionado(tema: string): boolean {
   changeItemsPerPage(newItemsPerPage: number): void {
     this.itemsPerPage = newItemsPerPage;
     this.currentPage = 1; // Resetear a la primera página
+    this.updateDatosPaginados();
   }
 
   /**
