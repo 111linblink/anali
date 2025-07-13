@@ -1,61 +1,55 @@
 {
-  "hash": "8eb9cc7e",
-  "configHash": "a2bbc5a1",
-  "lockfileHash": "2581cef4",
-  "browserHash": "6d979132",
+  "hash": "aaf03be8",
+  "configHash": "d4f790c1",
+  "lockfileHash": "8e6bea41",
+  "browserHash": "3722b1bf",
   "optimized": {
     "@angular/common": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
       "file": "@angular_common.js",
-      "fileHash": "1c622e98",
+      "fileHash": "ac5e8ede",
       "needsInterop": false
     },
     "@angular/common/http": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/http.mjs",
       "file": "@angular_common_http.js",
-      "fileHash": "1f4f0b1b",
+      "fileHash": "671745b1",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "394942d7",
+      "fileHash": "202a5ca1",
       "needsInterop": false
     },
     "@angular/forms": {
       "src": "../../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
       "file": "@angular_forms.js",
-      "fileHash": "0f9db00a",
+      "fileHash": "d422ec26",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "fbeecb3f",
+      "fileHash": "8a7b53d2",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "68aa8a56",
+      "fileHash": "15d6f36a",
       "needsInterop": false
     },
     "ng2-charts": {
       "src": "../../../../../../node_modules/ng2-charts/fesm2020/ng2-charts.mjs",
       "file": "ng2-charts.js",
-      "fileHash": "a34034f6",
-      "needsInterop": false
-    },
-    "xlsx": {
-      "src": "../../../../../../node_modules/xlsx/xlsx.mjs",
-      "file": "xlsx.js",
-      "fileHash": "8eb392de",
+      "fileHash": "626e36b6",
       "needsInterop": false
     },
     "zone.js": {
       "src": "../../../../../../node_modules/zone.js/fesm2015/zone.js",
       "file": "zone__js.js",
-      "fileHash": "6b73e470",
+      "fileHash": "8ee92b45",
       "needsInterop": true
     }
   },
