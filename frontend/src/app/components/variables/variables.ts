@@ -59,12 +59,59 @@ export class VariablesComponent implements OnInit {
     datasets: []
   };
 
-  radarOpciones: ChartOptions = {
-    responsive: true,
-    scales: {
-      y: { beginAtZero: true, max: 5 }
+  radarOpciones: any = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: {
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        color: '#333'
+      }
+    },
+    tooltip: {
+      callbacks: {
+        title: (tooltipItems: any) => {
+          const index = tooltipItems[0].dataIndex;
+          return this.radarDataset.labels[index];
+        }
+      }
     }
-  };
+  },
+  scales: {
+    r: {
+      angleLines: {
+        display: true,
+        color: '#ccc'
+      },
+      grid: {
+        color: '#e0e0e0'
+      },
+      suggestedMin: 0,
+      suggestedMax: 5,
+      ticks: {
+        backdropColor: 'transparent',
+        color: '#555',
+        stepSize: 1,
+        font: {
+          size: 12
+        }
+      },
+      pointLabels: {
+        font: {
+          size: 12
+        },
+        color: '#222',
+        padding: 10
+      }
+    }
+  }
+};
+
 
   constructor(private router: Router, private http: HttpClient) {}
 
@@ -523,7 +570,7 @@ updateSelection(): void {
       this.clusterDescripcion = `Grupo estimado con base en tus respuestas.`;
 
       this.radarDataset = {
-        labels: columnas,
+        labels: columnas.map(c => this.abreviarEtiqueta(c)),
         datasets: [{
           data: columnas.map(c => res.valores[c]),
           label: `Tus respuestas (Cluster ${res.cluster})`
@@ -534,6 +581,13 @@ updateSelection(): void {
       console.error('Error en preanálisis:', err);
     }
   });
+}
+
+abreviarEtiqueta(etiqueta: string): string {
+  if (etiqueta.length <= 25) return etiqueta;
+
+  const partes = etiqueta.split(' ');
+  return partes.slice(0, 3).join(' ') + '...';
 }
 
 

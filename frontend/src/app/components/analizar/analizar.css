@@ -377,3 +377,21 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #5a67d8;
+}

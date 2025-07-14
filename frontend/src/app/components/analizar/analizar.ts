@@ -11,6 +11,10 @@ import { FormsModule } from '@angular/forms';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Chart, ChartOptions } from 'chart.js';
 import * as THREE from 'three';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 
 interface EstadisticaMedia {
   media: { [key: string]: number };
@@ -362,29 +366,26 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
   }
 
   // Inicializar Three.js
-  initThreeJS(): void {
+   initThreeJS(): void {
     if (!this.threejsContainer) return;
 
     const container = this.threejsContainer.nativeElement;
     const width = container.clientWidth;
     const height = 400;
 
-    // Crear escena
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf8fafc);
 
-    // Crear cámara
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     this.camera.position.set(10, 10, 10);
 
-    // Crear renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(width, height);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
 
-    // Agregar luces
+    // Luz ambiental y direccional
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     this.scene.add(ambientLight);
 
@@ -393,27 +394,101 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
     directionalLight.castShadow = true;
     this.scene.add(directionalLight);
 
-    // Agregar controles de órbita (simulados)
-    this.addMouseControls();
+    // Controles OrbitControls para rotar/zoom/pan
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.minDistance = 5;
+    this.controls.maxDistance = 50;
 
-    // Iniciar animación
     this.animate();
   }
 
-  // Crear gráfica 3D de dispersión
+  crearEjes(): void {
+    const container = this.threejsContainer?.nativeElement;
+    if (!container) return;
+
+    // Limpiar ejes anteriores (para evitar duplicados)
+    const toRemove = this.scene.children.filter(
+      (child) => child.userData['tipo'] === 'eje' || child.userData['tipo'] === 'label'
+    );
+    toRemove.forEach(child => this.scene.remove(child));
+
+    // Calculamos ejeLength dinámico según datos (opcional)
+    const valoresX = this.resultado.map(r => parseFloat(r[this.ejeX]) || 0);
+    const valoresY = this.resultado.map(r => parseFloat(r[this.ejeY]) || 0);
+    const valoresZ = this.resultado.map(r => parseFloat(r[this.ejeZ]) || 0);
+
+    const maxX = Math.max(...valoresX, 10);
+    const maxY = Math.max(...valoresY, 10);
+    const maxZ = Math.max(...valoresZ, 10);
+
+    const axisLength = Math.max(maxX, maxY, maxZ) * 1.2;
+
+    // Eje X
+    const xGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(axisLength, 0, 0)
+    ]);
+    const xMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    const xAxis = new THREE.Line(xGeometry, xMaterial);
+    xAxis.userData['tipo'] = 'eje';
+    this.scene.add(xAxis);
+
+    // Eje Y
+    const yGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, axisLength, 0)
+    ]);
+    const yMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+    const yAxis = new THREE.Line(yGeometry, yMaterial);
+    yAxis.userData['tipo'] = 'eje';
+    this.scene.add(yAxis);
+
+    // Eje Z
+    const zGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, axisLength)
+    ]);
+    const zMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    const zAxis = new THREE.Line(zGeometry, zMaterial);
+    zAxis.userData['tipo'] = 'eje';
+    this.scene.add(zAxis);
+
+    // Ahora agregamos etiquetas 3D con FontLoader y TextGeometry
+    const loader = new FontLoader();
+    loader.load('/assets/fonts/helvetiker_regular.typeface.json', (font) => {
+      const crearEtiqueta = (texto: string, posicion: THREE.Vector3, color: number) => {
+        const geom = new TextGeometry(texto, {
+          font,
+          size: axisLength * 0.05, // tamaño relativo al eje
+          depth: 0.05,
+          curveSegments: 12,
+        });
+        const mat = new THREE.MeshBasicMaterial({ color });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.copy(posicion);
+        mesh.userData['tipo'] = 'label';
+        this.scene.add(mesh);
+      };
+
+      crearEtiqueta(this.ejeX || 'X', new THREE.Vector3(axisLength + axisLength * 0.03, 0, 0), 0xff0000);
+      crearEtiqueta(this.ejeY || 'Y', new THREE.Vector3(0, axisLength + axisLength * 0.03, 0), 0x00ff00);
+      crearEtiqueta(this.ejeZ || 'Z', new THREE.Vector3(0, 0, axisLength + axisLength * 0.03), 0x0000ff);
+    });
+  }
+
   crear3DScatterPlot(): void {
     if (!this.scene || !this.resultado.length) return;
 
-    // Limpiar objetos existentes
+    // Limpiar puntos previos y ejes
     const objetosARemover = this.scene.children.filter((child: THREE.Object3D) =>
-      child.userData['tipo'] === 'punto' || child.userData['tipo'] === 'eje'
+      child.userData['tipo'] === 'punto' || child.userData['tipo'] === 'eje' || child.userData['tipo'] === 'label' || child.userData['tipo'] === 'centroide' || child.userData['tipo'] === 'centroideLabel'
     );
     objetosARemover.forEach(objeto => this.scene.remove(objeto));
 
-    // Crear ejes
     this.crearEjes();
 
-    // Agrupar datos por cluster
     const grupos: { [key: string]: any[] } = {};
     this.resultado.forEach(row => {
       const grupo = row['grupo'];
@@ -427,7 +502,7 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
       grupos[grupo].push({ x, y, z });
     });
 
-    // Crear puntos 3D para cada cluster
+    // Dibujar puntos de clusters
     Object.entries(grupos).forEach(([grupo, puntos], index) => {
       const color = new THREE.Color(this.modernColors[index % this.modernColors.length]);
 
@@ -449,101 +524,49 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
         this.scene.add(mesh);
       });
     });
-  }
 
-  // Crear ejes 3D
-  crearEjes(): void {
-    const axisLength = 10;
+    // Dibujar centroides con etiqueta
+    this.centroides.forEach((c, index) => {
+      const color = new THREE.Color(0x000000); // Negro para centroides
+      const geometry = new THREE.SphereGeometry(0.4, 16, 16);
+      const material = new THREE.MeshPhongMaterial({
+        color: color,
+        emissive: 0xffff00,
+        emissiveIntensity: 0.7,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(c.valores[this.ejeX], c.valores[this.ejeY], c.valores[this.ejeZ]);
+      mesh.userData['tipo'] = 'centroide';
+      this.scene.add(mesh);
 
-    // Eje X (rojo)
-    const xGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(axisLength, 0, 0)
-    ]);
-    const xMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    const xAxis = new THREE.Line(xGeometry, xMaterial);
-    xAxis.userData['tipo'] = 'eje';
-    this.scene.add(xAxis);
-
-    // Eje Y (verde)
-    const yGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, axisLength, 0)
-    ]);
-    const yMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-    const yAxis = new THREE.Line(yGeometry, yMaterial);
-    yAxis.userData['tipo'] = 'eje';
-    this.scene.add(yAxis);
-
-    // Eje Z (azul)
-    const zGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, axisLength)
-    ]);
-    const zMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    const zAxis = new THREE.Line(zGeometry, zMaterial);
-    zAxis.userData['tipo'] = 'eje';
-    this.scene.add(zAxis);
-  }
-
-  // Controles de mouse simplificados
-  addMouseControls(): void {
-    const canvas = this.renderer.domElement;
-    let isMouseDown = false;
-    let mouseX = 0;
-    let mouseY = 0;
-
-    canvas.addEventListener('mousedown', (event: MouseEvent) => {
-      isMouseDown = true;
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    });
-
-    canvas.addEventListener('mousemove', (event: MouseEvent) => {
-      if (!isMouseDown) return;
-
-      const deltaX = event.clientX - mouseX;
-      const deltaY = event.clientY - mouseY;
-
-      // Rotar cámara
-      const spherical = new THREE.Spherical();
-      spherical.setFromVector3(this.camera.position);
-      spherical.theta -= deltaX * 0.01;
-      spherical.phi += deltaY * 0.01;
-      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-
-      this.camera.position.setFromSpherical(spherical);
-      this.camera.lookAt(0, 0, 0);
-
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    });
-
-    canvas.addEventListener('mouseup', () => {
-      isMouseDown = false;
-    });
-
-    canvas.addEventListener('wheel', (event: WheelEvent) => {
-      event.preventDefault();
-      const distance = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
-      const newDistance = distance + event.deltaY * 0.01;
-
-      if (newDistance > 5 && newDistance < 50) {
-        this.camera.position.normalize().multiplyScalar(newDistance);
-      }
+      // Etiqueta para centroides
+      const loader = new FontLoader();
+      loader.load('/assets/fonts/helvetiker_regular.typeface.json', (font) => {
+        const textGeom = new TextGeometry(`C${c.cluster}`, {
+          font,
+          size: 0.5,
+          depth: 0.05,
+          curveSegments: 12,
+        });
+        const textMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const label = new THREE.Mesh(textGeom, textMat);
+        label.position.set(c.valores[this.ejeX] + 0.5, c.valores[this.ejeY], c.valores[this.ejeZ]);
+        label.userData['tipo'] = 'centroideLabel';
+        this.scene.add(label);
+      });
     });
   }
 
-  // Animación
   animate(): void {
     this.animationId = requestAnimationFrame(() => this.animate());
+
+    this.controls.update();
 
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }
 
-  // Limpiar recursos
   ngOnDestroy(): void {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
@@ -567,36 +590,40 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
   }
 
   exportarPDF(): void {
-    const doc = new jsPDF();
-    doc.text('Centroides por Cluster', 10, 10);
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    doc.setFontSize(16);
+    doc.text('Centroides por Cluster', 148, 15, { align: 'center' });
 
     const columnasPDF = ['Cluster', ...this.variablesSeleccionadas];
-    const filasPDF = this.centroides.map(c => [c.cluster, ...this.variablesSeleccionadas.map(v => c.valores[v])]);
+    const filasPDF = this.centroides.map(c =>
+      [c.cluster, ...this.variablesSeleccionadas.map(v => c.valores[v]?.toFixed(2) ?? '')]
+    );
 
     autoTable(doc, {
-      startY: 20,
+      startY: 25,
       head: [columnasPDF],
       body: filasPDF,
+      theme: 'grid',
       styles: {
-        fontSize: 10,
-        cellPadding: 4,
-        valign: 'middle',
+        fontSize: 9,
+        cellPadding: 2,
+        halign: 'center',
+        valign: 'middle'
       },
       headStyles: {
-        fillColor: [102, 126, 234], // Azul
+        fillColor: [102, 126, 234], // Azul vibrante
         textColor: 255,
-        fontStyle: 'bold',
+        fontStyle: 'bold'
       },
       bodyStyles: {
-        fillColor: [250, 251, 252],
-        textColor: 50,
+        textColor: 40
       },
       alternateRowStyles: {
-        fillColor: [245, 245, 250],
+        fillColor: [245, 245, 250]
       },
-      margin: { top: 20, left: 10, right: 10 }
+      margin: { left: 10, right: 10 }
     });
-
 
     doc.save('centroides.pdf');
   }
@@ -640,50 +667,68 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
   }
 
   async exportarEstadisticasPDFConGraficas(): Promise<void> {
-    const doc = new jsPDF();
-    doc.text('Estadísticas por Cluster', 10, 10);
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    doc.setFont('times'); // Fuente con mejor soporte de caracteres latinos
 
     const columnasPDF = ['Cluster', ...this.variablesSeleccionadas];
     const filasPDF = Object.entries(this.estadisticas).map(([cluster, stats]) =>
-      [cluster, ...this.variablesSeleccionadas.map(v => stats.media[v])]
+      [cluster, ...this.variablesSeleccionadas.map(v => stats.media[v]?.toFixed(2) ?? '')]
     );
 
-autoTable(doc, {
-  startY: 20,
-  head: [this.columnas],
-  body: filasPDF,
-  styles: { fontSize: 9, cellPadding: 3 },
-  headStyles: { fillColor: [102, 126, 234], textColor: 255 },
-  bodyStyles: { textColor: 40 },
-  alternateRowStyles: { fillColor: [245, 245, 250] }
-});
+    // Primera página: Título y tabla
+    doc.setFontSize(16);
+    doc.text('Análisis Estadístico por Cluster', 148, 15, { align: 'center' });
 
+    autoTable(doc, {
+      startY: 25,
+      head: [columnasPDF],
+      body: filasPDF,
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+        halign: 'center',
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [63, 81, 181], // Azul profesional
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fillColor: [245, 245, 245],
+        textColor: 33
+      },
+      alternateRowStyles: {
+        fillColor: [250, 250, 250]
+      },
+      margin: { top: 25, left: 10, right: 10 }
+    });
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const barImage = this.barChartCanvas.nativeElement.toDataURL('image/png');
-    const radarImage = this.radarChartCanvas.nativeElement.toDataURL('image/png');
-    const pieImage = this.pieChartCanvas.nativeElement.toDataURL('image/png');
-    const scatterImage = this.scatterChartCanvas.nativeElement.toDataURL('image/png');
+    const charts = [
+      { title: 'Gráfico de Barras', canvas: this.barChartCanvas },
+      { title: 'Gráfico de Radar', canvas: this.radarChartCanvas },
+      { title: 'Gráfico de Pastel', canvas: this.pieChartCanvas },
+      { title: 'Gráfico de Dispersión', canvas: this.scatterChartCanvas }
+    ];
 
-    doc.addPage();
-    doc.text('Gráfico de Barras', 10, 10);
-    doc.addImage(barImage, 'PNG', 10, 20, 180, 90);
+    for (const chart of charts) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.text(chart.title, 148, 15, { align: 'center' });
 
-    doc.addPage();
-    doc.text('Gráfico de Radar', 10, 10);
-    doc.addImage(radarImage, 'PNG', 10, 20, 180, 90);
+      const image = chart.canvas.nativeElement.toDataURL('image/png');
+      doc.addImage(image, 'PNG', 10, 25, 270, 140);
+    }
 
-    doc.addPage();
-    doc.text('Gráfico de Pastel', 10, 10);
-    doc.addImage(pieImage, 'PNG', 10, 20, 180, 90);
-
-    doc.addPage();
-    doc.text('Gráfico de Dispersión', 10, 10);
-    doc.addImage(scatterImage, 'PNG', 10, 20, 180, 90);
-
-    doc.save('estadisticas_con_graficas.pdf');
+    doc.save('analisis_completo.pdf');
   }
+
+
+
 
   exportarDatosAgrupadosPDF(): void {
     const doc = new jsPDF();
@@ -723,4 +768,4 @@ autoTable(doc, {
     const fin = inicio + this.filasPorPagina;
     return this.resultado.slice(inicio, fin);
   }
-}
+} 

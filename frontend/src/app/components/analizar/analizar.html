@@ -224,10 +224,14 @@
         .table-container {
             background: #ffffff;
             border-radius: 12px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             margin-bottom: 30px;
+            max-width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
+
 
         table {
             width: 100%;
@@ -573,6 +577,27 @@
                 </table>
             </div>
         </div>
+<!-- 
+        <div class="section fade-in">
+  <h2>📋 Datos Detallados</h2>
+  <div class="table-container" *ngIf="resultado.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th *ngFor="let col of variablesSeleccionadas">{{ col }}</th>
+          <th>Grupo Asignado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fila of filasPaginadas(); let i = index" [style.background-color]="i % 2 === 0 ? '#fafbfc' : '#ffffff'">
+          <td *ngFor="let col of variablesSeleccionadas">{{ fila[col] }}</td>
+          <td><strong>Cluster {{ fila.grupo }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+-->
 
         <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px;">
   <button (click)="paginaActual = paginaActual - 1" [disabled]="paginaActual === 1">Anterior</button>
