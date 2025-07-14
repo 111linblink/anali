@@ -557,7 +557,7 @@
                 </table>
             </div>
         </div>
-
+<!--
         <div class="section fade-in">
             <h2>📋 Datos Detallados</h2>
             <div class="table-container" *ngIf="resultado.length > 0">
@@ -577,6 +577,33 @@
                 </table>
             </div>
         </div>
+    -->
+        <div class="section fade-in">
+  <h2>📋 Datos Detallados</h2>
+  <div class="table-container" *ngIf="resultado.length > 0">
+    <table>
+      <thead>
+         <tr>
+          <th>Nombre</th>
+          <th>Género</th>
+          <th>Edad</th>
+          <th *ngFor="let col of variablesSeleccionadas">{{ col }}</th>
+          <th>Grupo Asignado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fila of filasPaginadas(); let i = index" [style.background-color]="i % 2 === 0 ? '#fafbfc' : '#ffffff'">
+          <td>{{ fila['Nombre'] }}</td>
+          <td>{{ fila['�Con que genero te identificas?'] }}</td>
+          <td>{{ fila['�Que edad tienes?'] }}</td>
+          <td *ngFor="let col of variablesSeleccionadas">{{ fila[col] }}</td>
+          <td><strong>Cluster {{ fila.grupo }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- 
         <div class="section fade-in">
   <h2>📋 Datos Detallados</h2>
