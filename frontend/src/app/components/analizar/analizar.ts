@@ -33,6 +33,7 @@ Chart.register(ChartDataLabels);
   styleUrls: ['./analizar.css']
 })
 export class AnalizarComponent implements OnInit, AfterViewInit {
+  
   resultado: any[] = [];
   columnas: string[] = [];
   variablesSeleccionadas: string[] = [];
@@ -83,7 +84,8 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
   // Colores modernos para los clusters
   private modernColors = [
     '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
-    '#ef4444', '#06b6d4', '#84cc16', '#f97316', '#8b5a8c'
+    '#ef4444', '#06b6d4', '#84cc16', '#f97316', '#8b5a8c', '#F28E2B',  // naranja suave
+  '#D9E77D', '#59A14F'   // verde más fuerte
   ];
 
   constructor(private http: HttpClient) { }
@@ -296,6 +298,7 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
   actualizarGraficoDispersion(): void {
     const grupos: { [key: string]: any[] } = {};
 
+    // Agrupar puntos por cluster
     this.resultado.forEach(row => {
       const grupo = row['grupo'];
       const xRaw = row[this.ejeX];
@@ -309,17 +312,22 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
       grupos[grupo].push({ x, y });
     });
 
-    this.scatterChartData = {
-      datasets: Object.entries(grupos).map(([grupo, puntos], index) => ({
-        label: `Cluster ${grupo}`,
-        data: puntos,
-        backgroundColor: this.modernColors[index % this.modernColors.length] + '80',
-        borderColor: this.modernColors[index % this.modernColors.length],
-        pointRadius: 8,
-        pointHoverRadius: 12,
-        borderWidth: 2
-      }))
+    // Ordenar los grupos para consistencia en los colores
+    const gruposOrdenados = Object.keys(grupos).sort();
+this.scatterChartData = {
+  datasets: Object.entries(this.conteoClusters).map(([cluster, count], i) => {
+    const datosDelGrupo = this.resultado.filter(item => item.grupo === Number(cluster));
+    return {
+      label: `Cluster ${cluster}`,
+      data: datosDelGrupo.map(item => ({ x: item[this.ejeX], y: item[this.ejeY] })),
+      backgroundColor: this.modernColors[i % this.modernColors.length] + 'AA',
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      borderWidth: 0
     };
+  })
+};
+
 
     this.scatterOptions = {
       responsive: true,
@@ -330,10 +338,24 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
           labels: {
             font: { size: 14, weight: 'bold' },
             color: '#374151',
-            usePointStyle: true
+            usePointStyle: true,
+            padding: 20,
+            boxWidth: 12
+          },
+          onClick: (e, legendItem, legend) => {
+            // Deshabilitar la funcionalidad de ocultar al hacer clic en la leyenda
+            return;
           }
         },
-        datalabels: { display: false }
+        tooltip: {
+          callbacks: {
+            label: (context) => `(${context.parsed.x.toFixed(2)}, ${context.parsed.y.toFixed(2)})`
+          }
+        }
+        ,
+        datalabels: {
+          display: false
+        }
       },
       scales: {
         x: {
@@ -341,154 +363,248 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
             display: true,
             text: this.ejeX,
             font: { size: 14, weight: 'bold' },
-            color: '#374151'
+            color: '#374151',
+            padding: { top: 10 }
           },
-          grid: { color: '#f3f4f6' },
-          ticks: { color: '#6b7280' }
+          grid: {
+            color: '#f3f4f6',
+            drawBorder: true
+          },
+          ticks: {
+            color: '#6b7280',
+            font: { size: 12 }
+          }
         },
         y: {
           title: {
             display: true,
             text: this.ejeY,
             font: { size: 14, weight: 'bold' },
-            color: '#374151'
+            color: '#45669cff',
+            padding: { bottom: 10 }
           },
-          grid: { color: '#f3f4f6' },
-          ticks: { color: '#6b7280' }
+          grid: {
+            color: '#f3f4f6',
+            drawBorder: true
+          },
+          ticks: {
+            color: '#6b7280',
+            font: { size: 12 }
+          }
+        }
+      },
+      elements: {
+        point: {
+          hoverBackgroundColor: (context) => {
+            const dataset = context.dataset;
+            return dataset.backgroundColor as string; // Asegurar el tipo de retorno
+          }
         }
       }
     };
-
-    // Actualizar gráfica 3D si está inicializada
-    if (this.scene) {
-      this.crear3DScatterPlot();
-    }
   }
 
   // Inicializar Three.js
-   initThreeJS(): void {
+  initThreeJS(): void {
     if (!this.threejsContainer) return;
 
     const container = this.threejsContainer.nativeElement;
     const width = container.clientWidth;
-    const height = 400;
+    const height = 500; // Altura fija para mejor visualización
+
+    // Limpiar renderizador anterior si existe
+    if (this.renderer) {
+      this.renderer.dispose();
+      container.innerHTML = '';
+    }
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf8fafc);
 
-    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    this.camera.position.set(10, 10, 10);
+    // Configurar cámara con mejor posición inicial
+    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    this.camera.position.set(15, 15, 15);
+    this.camera.lookAt(0, 0, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+    this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(width, height);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
 
-    // Luz ambiental y direccional
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    // Mejor iluminación
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(10, 10, 5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 50;
+    directionalLight.shadow.camera.left = -10;
+    directionalLight.shadow.camera.right = 10;
+    directionalLight.shadow.camera.top = 10;
+    directionalLight.shadow.camera.bottom = -10;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
     this.scene.add(directionalLight);
 
-    // Controles OrbitControls para rotar/zoom/pan
+    // Luz de relleno
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    fillLight.position.set(-10, 10, 5);
+    this.scene.add(fillLight);
+
+    // Controles más suaves
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.minDistance = 5;
     this.controls.maxDistance = 50;
+    this.controls.maxPolarAngle = Math.PI * 0.9; // Evitar voltear completamente
+    this.controls.screenSpacePanning = false;
+
+    // Manejar redimensionamiento
+    window.addEventListener('resize', () => this.onWindowResize());
 
     this.animate();
+  }
+
+  private onWindowResize(): void {
+    const container = this.threejsContainer?.nativeElement;
+    if (!container || !this.camera || !this.renderer) return;
+
+    const width = container.clientWidth;
+    const height = 500; // Mantener altura fija
+
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
   }
 
   crearEjes(): void {
     const container = this.threejsContainer?.nativeElement;
     if (!container) return;
 
-    // Limpiar ejes anteriores (para evitar duplicados)
+    // Limpiar ejes anteriores
     const toRemove = this.scene.children.filter(
       (child) => child.userData['tipo'] === 'eje' || child.userData['tipo'] === 'label'
     );
     toRemove.forEach(child => this.scene.remove(child));
 
-    // Calculamos ejeLength dinámico según datos (opcional)
+    // Calcular longitud de ejes basada en los datos
     const valoresX = this.resultado.map(r => parseFloat(r[this.ejeX]) || 0);
     const valoresY = this.resultado.map(r => parseFloat(r[this.ejeY]) || 0);
     const valoresZ = this.resultado.map(r => parseFloat(r[this.ejeZ]) || 0);
 
-    const maxX = Math.max(...valoresX, 10);
-    const maxY = Math.max(...valoresY, 10);
-    const maxZ = Math.max(...valoresZ, 10);
+    const maxX = Math.max(...valoresX.map(Math.abs), 10);
+    const maxY = Math.max(...valoresY.map(Math.abs), 10);
+    const maxZ = Math.max(...valoresZ.map(Math.abs), 10);
 
-    const axisLength = Math.max(maxX, maxY, maxZ) * 1.2;
+    const axisLength = Math.max(maxX, maxY, maxZ) * 1.5;
 
-    // Eje X
-    const xGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(axisLength, 0, 0)
-    ]);
-    const xMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    const xAxis = new THREE.Line(xGeometry, xMaterial);
-    xAxis.userData['tipo'] = 'eje';
-    this.scene.add(xAxis);
+    // Grosor de los ejes
+    const axisWidth = 0.05;
 
-    // Eje Y
-    const yGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, axisLength, 0)
-    ]);
-    const yMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-    const yAxis = new THREE.Line(yGeometry, yMaterial);
-    yAxis.userData['tipo'] = 'eje';
-    this.scene.add(yAxis);
+    // Materiales para los ejes
+    const xMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const yMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const zMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
 
-    // Eje Z
-    const zGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, axisLength)
-    ]);
-    const zMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    const zAxis = new THREE.Line(zGeometry, zMaterial);
-    zAxis.userData['tipo'] = 'eje';
-    this.scene.add(zAxis);
+    // Crear ejes como cilindros para mejor visibilidad
+    const createAxis = (length: number, material: THREE.Material, rotation: [number, number, number]) => {
+      const geometry = new THREE.CylinderGeometry(axisWidth, axisWidth, length, 8);
+      geometry.rotateX(rotation[0]);
+      geometry.rotateY(rotation[1]);
+      geometry.rotateZ(rotation[2]);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(
+        rotation[1] === Math.PI / 2 ? length / 2 : 0,
+        rotation[0] === Math.PI / 2 ? length / 2 : 0,
+        rotation[2] === Math.PI / 2 ? length / 2 : 0
+      );
+      mesh.userData['tipo'] = 'eje';
+      return mesh;
+    };
 
-    // Ahora agregamos etiquetas 3D con FontLoader y TextGeometry
+    // Eje X (rojo)
+    this.scene.add(createAxis(axisLength, xMaterial, [0, Math.PI / 2, 0]));
+
+    // Eje Y (verde)
+    this.scene.add(createAxis(axisLength, yMaterial, [Math.PI / 2, 0, 0]));
+
+    // Eje Z (azul)
+    this.scene.add(createAxis(axisLength, zMaterial, [0, 0, Math.PI / 2]));
+
+    // Conos para las puntas de los ejes
+    const coneGeometry = new THREE.ConeGeometry(axisWidth * 2, axisWidth * 4, 16);
+
+    // Cono X
+    const coneX = new THREE.Mesh(coneGeometry, xMaterial);
+    coneX.position.set(axisLength + axisWidth * 2, 0, 0);
+    coneX.rotation.set(0, -Math.PI / 2, 0);
+    coneX.userData['tipo'] = 'eje';
+    this.scene.add(coneX);
+
+    // Cono Y
+    const coneY = new THREE.Mesh(coneGeometry, yMaterial);
+    coneY.position.set(0, axisLength + axisWidth * 2, 0);
+    coneY.userData['tipo'] = 'eje';
+    this.scene.add(coneY);
+
+    // Cono Z
+    const coneZ = new THREE.Mesh(coneGeometry, zMaterial);
+    coneZ.position.set(0, 0, axisLength + axisWidth * 2);
+    coneZ.rotation.set(Math.PI / 2, 0, 0);
+    coneZ.userData['tipo'] = 'eje';
+    this.scene.add(coneZ);
+
+    // Etiquetas de ejes con mejor formato
     const loader = new FontLoader();
     loader.load('/assets/fonts/helvetiker_regular.typeface.json', (font) => {
       const crearEtiqueta = (texto: string, posicion: THREE.Vector3, color: number) => {
         const geom = new TextGeometry(texto, {
           font,
-          size: axisLength * 0.05, // tamaño relativo al eje
+          size: axisLength * 0.05,
           depth: 0.05,
           curveSegments: 12,
         });
-        const mat = new THREE.MeshBasicMaterial({ color });
+        const mat = new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.9
+        });
         const mesh = new THREE.Mesh(geom, mat);
         mesh.position.copy(posicion);
         mesh.userData['tipo'] = 'label';
         this.scene.add(mesh);
       };
 
-      crearEtiqueta(this.ejeX || 'X', new THREE.Vector3(axisLength + axisLength * 0.03, 0, 0), 0xff0000);
-      crearEtiqueta(this.ejeY || 'Y', new THREE.Vector3(0, axisLength + axisLength * 0.03, 0), 0x00ff00);
-      crearEtiqueta(this.ejeZ || 'Z', new THREE.Vector3(0, 0, axisLength + axisLength * 0.03), 0x0000ff);
+      const labelOffset = axisLength * 0.1;
+      crearEtiqueta(this.ejeX || 'X', new THREE.Vector3(axisLength + labelOffset, 0, 0), 0xff0000);
+      crearEtiqueta(this.ejeY || 'Y', new THREE.Vector3(0, axisLength + labelOffset, 0), 0x00ff00);
+      crearEtiqueta(this.ejeZ || 'Z', new THREE.Vector3(0, 0, axisLength + labelOffset), 0x0000ff);
     });
   }
 
   crear3DScatterPlot(): void {
     if (!this.scene || !this.resultado.length) return;
 
-    // Limpiar puntos previos y ejes
+    // Limpiar elementos anteriores
     const objetosARemover = this.scene.children.filter((child: THREE.Object3D) =>
-      child.userData['tipo'] === 'punto' || child.userData['tipo'] === 'eje' || child.userData['tipo'] === 'label' || child.userData['tipo'] === 'centroide' || child.userData['tipo'] === 'centroideLabel'
+      child.userData['tipo'] === 'punto' || child.userData['tipo'] === 'eje' ||
+      child.userData['tipo'] === 'label' || child.userData['tipo'] === 'centroide' ||
+      child.userData['tipo'] === 'centroideLabel'
     );
     objetosARemover.forEach(objeto => this.scene.remove(objeto));
 
     this.crearEjes();
 
+    // Agrupar puntos por cluster
     const grupos: { [key: string]: any[] } = {};
     this.resultado.forEach(row => {
       const grupo = row['grupo'];
@@ -502,24 +618,46 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
       grupos[grupo].push({ x, y, z });
     });
 
+    // Ordenar grupos para consistencia en colores
+    const gruposOrdenados = Object.keys(grupos).sort();
+
+    // Crear geometrías compartidas para optimización
+    const sphereGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+    const sphereGeometryCentroide = new THREE.SphereGeometry(0.4, 16, 16);
+
     // Dibujar puntos de clusters
-    Object.entries(grupos).forEach(([grupo, puntos], index) => {
+    gruposOrdenados.forEach((grupo, index) => {
       const color = new THREE.Color(this.modernColors[index % this.modernColors.length]);
+      const material = new THREE.MeshPhongMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.8,
+        shininess: 30,
+        specular: new THREE.Color(0xffffff)
+      });
 
-      puntos.forEach(punto => {
-        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
-        const material = new THREE.MeshPhongMaterial({
-          color: color,
-          transparent: true,
-          opacity: 0.8
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
+      grupos[grupo].forEach(punto => {
+        const mesh = new THREE.Mesh(sphereGeometry, material.clone());
         mesh.position.set(punto.x, punto.y, punto.z);
-        mesh.userData['tipo'] = 'punto';
-        mesh.userData['cluster'] = grupo;
+        mesh.userData = {
+          tipo: 'punto',
+          cluster: grupo,
+          originalColor: color.getHex()
+        };
         mesh.castShadow = true;
         mesh.receiveShadow = true;
+
+        // Interactividad
+        // Interactividad
+        mesh.userData['onHover'] = () => {
+          mesh.material.color.setHex(0xffffff);
+          mesh.scale.set(1.5, 1.5, 1.5);
+        };
+
+        mesh.userData['onHoverOut'] = () => {
+          mesh.material.color.setHex(mesh.userData['originalColor']);
+          mesh.scale.set(1, 1, 1);
+        };
 
         this.scene.add(mesh);
       });
@@ -528,43 +666,136 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
     // Dibujar centroides con etiqueta
     this.centroides.forEach((c, index) => {
       const color = new THREE.Color(0x000000); // Negro para centroides
-      const geometry = new THREE.SphereGeometry(0.4, 16, 16);
       const material = new THREE.MeshPhongMaterial({
         color: color,
         emissive: 0xffff00,
         emissiveIntensity: 0.7,
+        shininess: 100
       });
-      const mesh = new THREE.Mesh(geometry, material);
+
+      const mesh = new THREE.Mesh(sphereGeometryCentroide, material);
       mesh.position.set(c.valores[this.ejeX], c.valores[this.ejeY], c.valores[this.ejeZ]);
-      mesh.userData['tipo'] = 'centroide';
+      mesh.userData = {
+        tipo: 'centroide',
+        cluster: c.cluster
+      };
+      mesh.castShadow = true;
       this.scene.add(mesh);
 
       // Etiqueta para centroides
       const loader = new FontLoader();
       loader.load('/assets/fonts/helvetiker_regular.typeface.json', (font) => {
-        const textGeom = new TextGeometry(`C${c.cluster}`, {
+        const textGeom = new TextGeometry(`Centroide ${c.cluster}`, {
           font,
           size: 0.5,
           depth: 0.05,
           curveSegments: 12,
         });
-        const textMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const textMat = new THREE.MeshBasicMaterial({
+          color: 0x000000,
+          transparent: true,
+          opacity: 0.9
+        });
         const label = new THREE.Mesh(textGeom, textMat);
-        label.position.set(c.valores[this.ejeX] + 0.5, c.valores[this.ejeY], c.valores[this.ejeZ]);
-        label.userData['tipo'] = 'centroideLabel';
+        label.position.set(
+          c.valores[this.ejeX] + 0.5,
+          c.valores[this.ejeY],
+          c.valores[this.ejeZ]
+        );
+        label.userData = {
+          tipo: 'centroideLabel',
+          cluster: c.cluster
+        };
         this.scene.add(label);
       });
     });
+
+    // Agregar interactividad
+    this.setup3DInteractivity();
   }
 
+  private setup3DInteractivity(): void {
+    const container = this.threejsContainer?.nativeElement;
+    if (!container) return;
+
+    // Variables para el hover
+    let hoveredObject: THREE.Object3D | null = null;
+
+    // Configurar raycaster para detectar hover
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    container.addEventListener('mousemove', (event) => {
+      // Calcular posición normalizada del mouse
+      const rect = container.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      // Actualizar raycaster
+      raycaster.setFromCamera(mouse, this.camera);
+
+      // Buscar intersecciones
+      const intersects = raycaster.intersectObjects(this.scene.children);
+
+      // Manejar hover out
+      if (hoveredObject && hoveredObject.userData['onHoverOut']) {
+        hoveredObject.userData['onHoverOut']();
+        hoveredObject = null;
+      }
+
+      // Manejar hover in
+      if (intersects.length > 0) {
+        const firstIntersected = intersects[0].object;
+        if (firstIntersected.userData['onHover']) {
+          firstIntersected.userData['onHover']();
+          hoveredObject = firstIntersected;
+
+          // Cambiar estilo del cursor
+          container.style.cursor = 'pointer';
+        } else {
+          container.style.cursor = 'default';
+        }
+      } else {
+        container.style.cursor = 'default';
+      }
+    });
+  }
+
+  private lastTime = 0;
+  private frameCount = 0;
+  private fps = 0;
+
   animate(): void {
-    this.animationId = requestAnimationFrame(() => this.animate());
+    const now = performance.now();
+    const deltaTime = now - this.lastTime;
+    this.lastTime = now;
+    this.frameCount++;
 
-    this.controls.update();
+    // Calcular FPS cada segundo
+    if (deltaTime >= 1000) {
+      this.fps = Math.round((this.frameCount * 1000) / deltaTime);
+      this.frameCount = 0;
+      this.lastTime = now;
 
-    if (this.renderer && this.scene && this.camera) {
-      this.renderer.render(this.scene, this.camera);
+      // Ajustar calidad dinámicamente basado en FPS
+      if (this.fps < 30 && this.renderer) {
+        this.renderer.setPixelRatio(Math.max(1, window.devicePixelRatio - 0.5));
+      } else if (this.fps > 50 && this.renderer) {
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+      }
     }
+
+    // Solo renderizar si hay cambios o controles en movimiento
+    if (this.controls && (this.controls.enabled || this.controls.isRotating || this.controls.isPanning)) {
+      this.controls.update();
+      this.renderer.render(this.scene, this.camera);
+    } else if (this.scene && this.camera && this.renderer) {
+      // Renderizado mínimo cuando no hay interacción
+      requestAnimationFrame(() => this.animate());
+      return;
+    }
+
+    this.animationId = requestAnimationFrame(() => this.animate());
   }
 
   ngOnDestroy(): void {
@@ -768,4 +999,6 @@ export class AnalizarComponent implements OnInit, AfterViewInit {
     const fin = inicio + this.filasPorPagina;
     return this.resultado.slice(inicio, fin);
   }
+
+
 } 
