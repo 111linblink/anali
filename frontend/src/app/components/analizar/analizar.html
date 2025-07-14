@@ -372,15 +372,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Análisis de Clustering Avanzado</h1>
+        <h1>Análisis de Clustering Avanzado</h1>
 
         <!-- Sección de controles -->
         <div class="section fade-in">
-            <h2>⚙️ Configuración y Exportación</h2>
+            <h2>Configuración y Exportación</h2>
             
             <div class="controls-grid">
                 <div class="control-group">
-                    <h4>📊 Configuración de Ejes</h4>
+                    <h4>Configuración de Ejes</h4>
                     <div class="form-group">
                         <label for="ejeX">Eje X:</label>
                         <select [(ngModel)]="ejeX" id="ejeX">
@@ -399,35 +399,35 @@
                             <option *ngFor="let col of variablesSeleccionadas" [value]="col">{{ col }}</option>
                         </select>
                     </div>
-                    <button (click)="actualizarGraficoDispersion()">🔄 Actualizar Gráficas</button>
+                    <button (click)="actualizarGraficoDispersion()">Actualizar Gráficas</button>
                 </div>
 
                 <div class="control-group">
-                    <h4>📤 Exportación de Datos</h4>
+                    <h4>Exportación de Datos</h4>
                     <div class="form-group">
                         <label for="tipoExportacion">Tipo de datos:</label>
                         <select [(ngModel)]="tipoExportacion" id="tipoExportacion">
-                            <option value="centroides">🎯 Centroides</option>
-                            <option value="estadisticas">📈 Estadísticas</option>
-                            <option value="datos">📋 Datos agrupados</option>
+                            <option value="centroides">Centroides</option>
+                            <option value="estadisticas">Estadísticas</option>
+                            <option value="datos">Datos agrupados</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="formatoExportacion">Formato:</label>
                         <select [(ngModel)]="formatoExportacion" id="formatoExportacion">
-                            <option value="pdf">📄 PDF</option>
-                            <option value="csv">📊 CSV</option>
-                            <option value="excel">📗 Excel</option>
+                            <option value="pdf">PDF</option>
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
                         </select>
                     </div>
-                    <button (click)="exportar()">💾 Exportar Datos</button>
+                    <button (click)="exportar()">Exportar Datos</button>
                 </div>
             </div>
         </div>
 
         <!-- Métricas principales -->
         <div class="section fade-in">
-            <h2>📊 Métricas Principales</h2>
+            <h2>Métricas Principales</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{{ Object.keys(conteoClusters).length }}</div>
@@ -446,7 +446,7 @@
 
         <!-- Gráfica 3D -->
         <div class="section fade-in">
-            <h2>🌐 Visualización 3D Interactiva</h2>
+            <h2>Visualización 3D Interactiva</h2>
             <div class="chart-3d">
                 <div class="chart-3d-content">
                     <div class="chart-3d-title">Dispersión 3D por Clusters</div>
@@ -468,11 +468,11 @@
 
         <!-- Gráficas 2D -->
         <div class="section fade-in">
-            <h2>📈 Visualizaciones Estadísticas</h2>
+            <h2>Visualizaciones Estadísticas</h2>
             
             <div class="chart-grid">
                 <div class="chart-container">
-                    <div class="chart-title">📊 Distribución por Clusters</div>
+                    <div class="chart-title">Distribución por Clusters</div>
                     <canvas #barChartCanvas
                             baseChart
                             [data]="barChartData"
@@ -483,7 +483,7 @@
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-title">🥧 Proporción de Clusters</div>
+                    <div class="chart-title">Proporción de Clusters</div>
                     <canvas #pieChartCanvas
                             baseChart
                             [data]="pieChartData"
@@ -494,7 +494,7 @@
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-title">🕸️ Perfil de Variables por Cluster</div>
+                    <div class="chart-title">Perfil de Variables por Cluster</div>
                     <canvas #radarChartCanvas
                             baseChart
                             [data]="radarChartData"
@@ -505,7 +505,7 @@
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-title">🔍 Dispersión 2D ({{ ejeX }} vs {{ ejeY }})</div>
+                    <div class="chart-title">Dispersión 2D ({{ ejeX }} vs {{ ejeY }})</div>
                     <canvas #scatterChartCanvas
                             baseChart
                             [data]="scatterChartData"
@@ -519,7 +519,7 @@
 
         <!-- Tablas de datos -->
         <div class="section fade-in">
-            <h2>🎯 Centroides por Cluster</h2>
+            <h2>Centroides por Cluster</h2>
             <div class="table-container" *ngIf="centroides.length > 0">
                 <table>
                     <thead>
@@ -539,7 +539,7 @@
         </div>
 
         <div class="section fade-in">
-            <h2>📊 Estadísticas por Cluster</h2>
+            <h2>Estadísticas por Cluster</h2>
             <div class="table-container">
                 <table>
                     <thead>
@@ -579,7 +579,7 @@
         </div>
     -->
         <div class="section fade-in">
-  <h2>📋 Datos Detallados</h2>
+  <h2>Datos Detallados</h2>
   <div class="table-container" *ngIf="resultado.length > 0">
     <table>
       <thead>
