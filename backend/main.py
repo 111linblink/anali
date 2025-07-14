@@ -7,6 +7,7 @@ from io import StringIO
 import pandas as pd
 import joblib
 import io
+import traceback
 import re
 
 app = FastAPI()
@@ -216,3 +217,15 @@ async def analizar(
         import traceback; traceback.print_exc()
         return JSONResponse(status_code=500, content={"error": f"Error interno: {str(e)}"})
 
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        # Leer CSV desde bytes
+        df = pd.read_csv(io.BytesIO(contents))
+
+        # Retornar columnas y primeras filas para vista previa
+        return {"columns": df.columns.tolist(), "preview": df.head().to_dict(orient="records")}
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=400, content={"error": f"Error leyendo archivo: {str(e)}"})
